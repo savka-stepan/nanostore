@@ -30,7 +30,8 @@ cd frontend
 # Install pnpm if not present
 if ! command -v pnpm &> /dev/null; then
     echo "pnpm not found. Installing pnpm..."
-    npm install -g pnpm
+    npm install --global pnpm --prefix ~/.local
+    export PATH="$HOME/.local/bin:$PATH"
 fi
 
 # Install frontend dependencies
