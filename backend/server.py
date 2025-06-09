@@ -15,7 +15,8 @@ from cart import (
 )
 from customer import fetch_customers, find_customer_by_code
 from product import load_products
-from scale import get_scale_port, trigger_relay
+from scale import get_scale_port
+from relay import trigger_relay
 from order import create_ofn_order_from_session
 
 BAUDRATE = 9600
@@ -63,9 +64,11 @@ async def handle_websocket(websocket):
                 customer_data = find_customer_by_code(code, customers)
                 # Save customer data for this session
                 SESSION_CUSTOMERS[session_id] = customer_data
+                print(customer_data)
                 # TODO: For production uncomment the next lines
                 if customer_data.get("exist"):
                     timeout = get_setting_from_db("timeout", 8000)
+                    print(timeout)
                     trigger_relay(timeout)
                 await websocket.send(
                     json.dumps({"type": "check_customer_code", **customer_data})
