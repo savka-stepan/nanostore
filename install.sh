@@ -35,7 +35,7 @@ if ! command -v pnpm &> /dev/null; then
 fi
 
 # Install frontend dependencies
-pnpm install
+poetry install --no-root
 
 # Copy .env.example to .env.local if .env.local does not exist
 if [ ! -f .env.local ] && [ -f .env.example ]; then
