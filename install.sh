@@ -38,9 +38,6 @@ if ! command -v pnpm &> /dev/null; then
     export PATH="$HOME/.local/bin:$PATH"
 fi
 
-# Install frontend dependencies
-poetry install --no-root
-
 # Copy .env.example to .env.local if .env.local does not exist
 if [ ! -f .env.local ] && [ -f .env.example ]; then
     cp .env.example .env.local
