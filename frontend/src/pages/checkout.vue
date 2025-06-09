@@ -83,7 +83,7 @@ let elements = null
 let ibanElement = null
 let clientSecret = null
 
-const { connectWS, sendWS, closeWS } = createWebSocket('ws://localhost:8765/', handleWSMessage)
+const { connectWS, sendWS, closeWS } = createWebSocket('ws://0.0.0.0:8765/', handleWSMessage)
 
 function handleWSMessage(event) {
   try {

@@ -27,7 +27,7 @@ let redirectTimeout = null
 
 function connectWS() {
   if (ws) ws.close()
-  ws = new window.WebSocket('ws://localhost:8765/')
+  ws = new window.WebSocket('ws://0.0.0.0:8765/')
   ws.onopen = () => {
     ws.send(JSON.stringify({ type: 'get_confirmation', key: 'confirmation-h1' }))
     ws.send(JSON.stringify({ type: 'confirmation_shown' }))
