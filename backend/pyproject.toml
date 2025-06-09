@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "backend"
+version = "0.1.0"
+description = ""
+authors = ["savka-stepan <savka.stepan.92@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+asyncio = "^3.4.3"
+websockets = "^15.0.1"
+pyserial = "^3.5"
+pyscard = "^2.2.2"
+pyusb = "^1.3.1"
+psycopg2-binary = "^2.9.10"
+httpx = "^0.28.1"
+dotenv = "^0.9.9"
+beautifulsoup4 = "^4.13.4"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

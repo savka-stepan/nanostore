@@ -1,0 +1,43 @@
+.DS_Store
+backend/.DS_Store
+
+*.pyc
+__pycache__/
+
+backend/.env
+backend/static
+backend/celerybeat-schedule
+backend/creds
+backend/restore
+backend/error.log
+backend/poetry.lock
+
+frontend/dist
+frontend/dev/assets/vendor
+frontend/node_modules
+frontend/src/node_modules
+frontend/package-lock.json
+frontend/yarn.lock
+frontend/pnpm-lock.yaml
+
+# local env files
+frontend/.env.local
+.frontend/env.*.local
+
+# Log files
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# Editor directories and files
+frontend/.idea
+frontend/.vscode
+frontend/*.suo
+frontend/*.ntvs*
+frontend/*.njsproj
+frontend/*.sln
+frontend/*.sw?
+
+backend_server.log
+frontend_server.log
