@@ -62,7 +62,7 @@ FRONTEND_DIST="$FRONTEND_DIR/dist"
 sudo bash -c "cat > $NGINX_CONF" <<EOL
 server {
     listen 5000;
-    server_name _;
+    server_name 127.0.0.1;
 
     root $FRONTEND_DIST;
     index index.html;
