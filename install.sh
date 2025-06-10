@@ -105,5 +105,5 @@ sudo systemctl restart nanostore-backend
 
 echo "=== All services started! ==="
 echo "Backend: sudo systemctl status nanostore-backend"
-echo "Frontend: http://0.0.0.0:5000 (served by nginx from $FRONTEND_DIST)"
+echo "Frontend: http://localhost:5000 (served by nginx from $FRONTEND_DIST)"
 echo "View backend logs: sudo journalctl -u nanostore-backend -f"

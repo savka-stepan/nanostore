@@ -260,8 +260,8 @@ async def handle_websocket(websocket):
 
 
 async def main():
-    print(f"Starting WebSocket server on ws://0.0.0.0:{WEBSOCKET_PORT}")
-    async with websockets.serve(handle_websocket, "0.0.0.0", WEBSOCKET_PORT):
+    print(f"Starting WebSocket server on ws://localhost:{WEBSOCKET_PORT}")
+    async with websockets.serve(handle_websocket, "localhost", WEBSOCKET_PORT):
         await asyncio.Future()  # run forever
 
 

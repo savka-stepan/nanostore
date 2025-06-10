@@ -25,7 +25,7 @@ const welcomeH2 = ref('Bitte lege deine Kundenkarte auf den Kartenleser rechts v
 const webSocketSnackbar = ref(false)
 const webSocketMessage = ref('')
 
-const { connectWS, sendWS, closeWS } = createWebSocket('ws://0.0.0.0:8765/', handleWSMessage)
+const { connectWS, sendWS, closeWS } = createWebSocket('ws://localhost:8765/', handleWSMessage)
 
 const handleWSOpen = () => {
   webSocketMessage.value = 'WebSocket connection established'
