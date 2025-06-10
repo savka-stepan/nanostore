@@ -3,6 +3,7 @@ import serial
 import websockets
 import json
 import uuid
+import re
 
 from db import get_setting_from_db
 from card import get_card_uid
@@ -208,11 +209,14 @@ async def handle_websocket(websocket):
                         line = ser.readline().decode(errors="ignore")
                         print(f"Received from scale: {line.strip()}")
                         if line:
-                            weight = line.strip()[0:7]
-                            print(f"Weight: {weight}")
-                            await websocket.send(
-                                json.dumps({"type": "weight", "value": weight})
-                            )
+                            # Extract the numeric value from the scale output
+                            match = re.search(r"([-+]?\d*\.\d+|\d+)", line)
+                            if match:
+                                weight = match.group(0)
+                                print(f"Weight: {weight}")
+                                await websocket.send(
+                                    json.dumps({"type": "weight", "value": weight})
+                                )
                         try:
                             if (
                                 await asyncio.wait_for(websocket.recv(), timeout=0.1)
