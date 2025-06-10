@@ -75,35 +75,16 @@ async def handle_websocket(websocket):
                     json.dumps({"type": "check_customer_code", **customer_data})
                 )
 
-            # Products load
-            elif msg.get("type") == "load_products":
-                products_data = load_products()
-                await websocket.send(
-                    json.dumps({"type": "load_products", **products_data})
-                )
-
             # Cart logic
             elif msg.get("type") == "get_cart":
                 cart = get_cart_for_session(session_id)
                 await websocket.send(json.dumps({"type": "cart", "cart": cart}))
 
-            elif msg.get("type") == "get_taxes_array":
+            # Products load
+            elif msg.get("type") == "load_products":
                 products_data = load_products()
-                taxes_array = products_data.get("taxes_array", {})
                 await websocket.send(
-                    json.dumps({"type": "taxes_array", "taxes_array": taxes_array})
-                )
-
-            elif msg.get("type") == "get_product_weight_array":
-                products_data = load_products()
-                product_weight_array = products_data.get("product_weight_array", {})
-                await websocket.send(
-                    json.dumps(
-                        {
-                            "type": "product_weight_array",
-                            "product_weight_array": product_weight_array,
-                        }
-                    )
+                    json.dumps({"type": "load_products", **products_data})
                 )
 
             elif msg.get("type") == "check_product_code":

@@ -177,11 +177,8 @@ function handleWSMessage(event) {
       cart.value = msg.cart || []
     }
 
-    if (msg.type === 'taxes_array') {
+    if (msg.type === 'load_products') {
       taxesArray.value = msg.taxes_array || {}
-    }
-
-    if (msg.type === 'product_weight_array') {
       productWeightArray.value = msg.product_weight_array || {}
     }
 
@@ -231,8 +228,7 @@ function handleWSMessage(event) {
 
 const fetchCart = () => {
   sendWS({ type: 'get_cart' })
-  sendWS({ type: 'get_taxes_array' })
-  sendWS({ type: 'get_product_weight_array' })
+  sendWS({ type: 'load_products' })
 }
 
 const updateQuantity = (item, newQty) => {

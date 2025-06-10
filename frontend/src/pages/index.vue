@@ -53,13 +53,12 @@ function handleWSMessage(event) {
       if (msg.exist) {
         webSocketMessage.value = 'Willkommen, ' + msg.full_name + '!'
         webSocketSnackbar.value = true
-        sendWS({ type: 'load_products' })
+        sleep(2000).then(() => {
+          window.location.href = '/cart'
+        })
       } else {
         welcomeH2.value = '❌ Kein gültiger Benutzer'
       }
-    } else if (msg.type === 'load_products') {
-      sleep(2000)
-      window.location.href = '/cart'
     }
     else if (msg.type === 'cart_deleted') {
       webSocketMessage.value = '🗑️ Warenkorb gelöscht'
