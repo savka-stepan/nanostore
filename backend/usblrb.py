@@ -1,3 +1,60 @@
+#
+# Updated version for Python 3, 01.04.2023
+# Just a few syntax changes were needed
+# Original version as found on the ABACOM forums (linked from product page):
+# https://forum.abacom-online.de/phpBB3/viewtopic.php?f=51&t=3751
+#
+# updated by Jonas Keunecke (drjones16@web.de)
+# https://github.com/jonesman/ABACOM-Relayboard
+# Original description below:
+
+#######################################################################
+
+###        ABACOM USB-LRB relay board (Python 2 script)
+###        to set relays status from linux command line
+###      tested on Raspberry Pi Rev.2 (Linux)  ABACOM 11/2013
+
+###    Other linux systems were not tested. Feedback wellcome.
+
+###                !!! USE ON YOUR OWN RISK !!!
+
+###       You need an active USB-HUB (or external) power
+###   for the relay board! RASPI USB POWER is NOT strong enough!
+
+#######################################################################
+
+#######################################################################
+### usage: sudo usblrb.py -d <deviceno> -s <status>
+#######################################################################
+
+### example calls from linux command line:
+
+### to change relays status ...
+###     sudo python ./usblrb.py --device 0 --status 123
+### or
+###     sudo python ./usblrb.py -d 0 -s 123
+
+### to list all devices ...
+###     sudo python ./usblrb.py
+
+### to read relays status from a devices ...
+###     sudo python ./usblrb.py -d 0
+
+### DEVICE: zero-based CH341A device list index
+### STATUS: Bit 0..7 represent REL1..REL8 status:
+### bit0..7 set = relay1..8 on
+### bit0..7 clear = relay1..8 off
+
+###################### required libraries  #######################
+### We need to have "pyUSB" library installed to access USB endpoints directly.
+### see http://pyusb.sourceforge.net/docs/1.0/tutorial.html
+### pyUSB requires the "libusb10" as "backend".
+### see http://www.libusb.org/wiki/libusb-1.0
+
+### Do NOT ask me how to install these libs.
+### It may be tricky, but somehow you will succeed!
+### Google for it!
+
 import usb.core
 import usb.util
 
@@ -233,4 +290,8 @@ def main(argv):
     else:
         print("Verfication failed!")
 
-    dev.reset()
+
+##############################################################
+### call the main method with arguments from command line ...
+if __name__ == "__main__":
+    main(sys.argv[1:])
