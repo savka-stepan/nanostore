@@ -7,10 +7,7 @@ def trigger_relay(timeout_ms: int):
     subprocess.run(
         ["poetry", "run", "python", "usblrb.py", "-d", "0", "-s", "123"], check=True
     )
-    print("Relay triggered for 123")
     time.sleep(timeout_ms / 1000)
-    print("Waiting for relay to reset...")
     subprocess.run(
         ["poetry", "run", "python", "usblrb.py", "-d", "0", "-s", "122"], check=True
     )
-    print("Relay reset to 122")
