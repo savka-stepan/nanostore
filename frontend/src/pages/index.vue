@@ -33,7 +33,7 @@ const handleWSOpen = () => {
   sendWS({ type: 'login' })
 }
 
-function handleWSClose() {
+const handleWSClose = () => {
   webSocketMessage.value = 'WebSocket connection failed'
   webSocketSnackbarColor.value = 'error'
   welcomeH1.value = '❌ WebSocket-Verbindung fehlgeschlagen'

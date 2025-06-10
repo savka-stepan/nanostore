@@ -155,7 +155,20 @@ const weightPrice = ref(0)
 const showProductNameError = ref(false)
 const productNameError = ref('')
 
-const { connectWS, sendWS, closeWS } = createWebSocket('ws://localhost:8765/', handleWSMessage)
+const handleWSOpen = () => {
+  console.log('WebSocket connection established')
+}
+
+const handleWSClose = () => {
+  console.log('WebSocket connection failed')
+}
+
+const { connectWS, sendWS, closeWS } = createWebSocket(
+  'ws://localhost:8765/',
+  handleWSMessage,
+  handleWSOpen,
+  handleWSClose
+)
 
 function handleWSMessage(event) {
   try {

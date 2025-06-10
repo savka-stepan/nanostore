@@ -197,23 +197,19 @@ async def handle_websocket(websocket):
             # Weight (for weighted products)
             elif msg.get("type") == "weight":
                 port = get_scale_port()
-                print(f"Scale port: {port}")
                 if not port:
                     await websocket.send(
                         json.dumps({"type": "weight", "error": "Scale not found"})
                     )
                     continue
                 with serial.Serial(port, BAUDRATE, timeout=1) as ser:
-                    print(ser)
                     while True:
                         line = ser.readline().decode(errors="ignore")
-                        print(f"Received from scale: {line.strip()}")
                         if line:
                             # Extract the numeric value from the scale output
                             match = re.search(r"([-+]?\d*\.\d+|\d+)", line)
                             if match:
                                 weight = match.group(0)
-                                print(f"Weight: {weight}")
                                 await websocket.send(
                                     json.dumps({"type": "weight", "value": weight})
                                 )
