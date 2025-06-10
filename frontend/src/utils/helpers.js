@@ -2,7 +2,7 @@ export function formatPrice(price) {
   return `${Number(price).toFixed(2)} €`
 }
 
-export function createWebSocket(url, handleWSMessage) {
+export function createWebSocket(url, handleWSMessage, handleWSOpen, handleWSClose) {
   let ws = null
   let wsQueue = []
   let wsReady = false
@@ -16,13 +16,20 @@ export function createWebSocket(url, handleWSMessage) {
       while (wsQueue.length > 0) {
         ws.send(JSON.stringify(wsQueue.shift()))
       }
+      if (typeof handleWSOpen === 'function') handleWSOpen()
     }
     ws.onmessage = handleWSMessage
-    ws.onclose = () => { ws = null; wsReady = false }
+    ws.onclose = () => {
+      ws = null
+      wsReady = false
+      if (typeof handleWSClose === 'function') handleWSClose()
+    }
+    ws.onerror = () => {
+      if (typeof handleWSClose === 'function') handleWSClose()
+    }
   }
 
   function sendWS(msg) {
-    // Attach session_id from localStorage if available
     const session_id = localStorage.getItem('session_id')
     if (session_id) {
       msg.session_id = session_id
@@ -39,6 +46,5 @@ export function createWebSocket(url, handleWSMessage) {
     if (ws) ws.close()
   }
 
-  // Expose ws so you can access it directly if needed
   return { connectWS, sendWS, closeWS }
 }

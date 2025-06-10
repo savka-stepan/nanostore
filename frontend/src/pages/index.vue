@@ -9,7 +9,7 @@
         <VIcon size="64" icon="tabler-app-window" />
       </div>
     </VCard>
-    <VSnackbar v-model="webSocketSnackbar" :timeout="3000" color="primary" location="top end">
+    <VSnackbar v-model="webSocketSnackbar" :timeout="3000" :color="webSocketSnackbarColor" location="top end">
       {{ webSocketMessage }}
     </VSnackbar>
   </div>
@@ -24,13 +24,21 @@ const welcomeH2 = ref('Bitte lege deine Kundenkarte auf den Kartenleser rechts v
 
 const webSocketSnackbar = ref(false)
 const webSocketMessage = ref('')
-
-const { connectWS, sendWS, closeWS } = createWebSocket('ws://localhost:8765/', handleWSMessage)
+const webSocketSnackbarColor = ref('primary')
 
 const handleWSOpen = () => {
   webSocketMessage.value = 'WebSocket connection established'
+  webSocketSnackbarColor.value = 'primary'
   webSocketSnackbar.value = true
   sendWS({ type: 'login' })
+}
+
+function handleWSClose() {
+  webSocketMessage.value = 'WebSocket connection failed'
+  webSocketSnackbarColor.value = 'error'
+  welcomeH1.value = '❌ WebSocket-Verbindung fehlgeschlagen'
+  welcomeH2.value = 'Bitte lade die Seite neu, um es erneut zu versuchen.'
+  webSocketSnackbar.value = true
 }
 
 function handleWSMessage(event) {
@@ -70,9 +78,17 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+let connectWS, sendWS, closeWS
+
 onMounted(() => {
+  // Pass open and close handlers to your helper
+  ({ connectWS, sendWS, closeWS } = createWebSocket(
+    'ws://localhost:8765/',
+    handleWSMessage,
+    handleWSOpen,
+    handleWSClose
+  ))
   connectWS()
-  handleWSOpen()
 })
 
 onBeforeUnmount(() => {
