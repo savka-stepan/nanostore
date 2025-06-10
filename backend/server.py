@@ -31,16 +31,16 @@ SESSION_CUSTOMERS = {}
 
 
 async def handle_websocket(websocket):
+    print("WebSocket connection opened")
     try:
-        print("WebSocket connection opened")
-        while True:
-            command = await websocket.recv()
+        async for command in websocket:
             print(f"Received: {command}")
 
             # --- JSON-based protocol for Vue frontend ---
             try:
                 msg = json.loads(command)
             except Exception:
+                await asyncio.sleep(0.01)
                 continue
 
             # --- Session ID logic ---
@@ -253,8 +253,6 @@ async def handle_websocket(websocket):
                     )
                 )
 
-    except websockets.exceptions.ConnectionClosed:
-        print("WebSocket connection closed")
     except Exception as e:
         print(f"Error in handle_websocket: {e}")
 
