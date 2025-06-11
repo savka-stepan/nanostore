@@ -17,7 +17,9 @@ def load_products() -> dict:
         "Content-Type": "application/json",
         "X-Spree-Token": OFN_ADMIN_API_KEY,
     }
-    products_url = f"{INSTANCE_URL}/api/v0/products/bulk_products?q[supplier_id_in]=256"
+    # TODO: Replace with actual distributor ID
+    distributor_id = "256"  # Example distributor ID, adjust as needed
+    products_url = f"{INSTANCE_URL}/api/v0/products/bulk_products?q[supplier_id_in]={distributor_id}"
     tax_url = f"{INSTANCE_URL}/api/v0/taxons"
     try:
         with httpx.Client() as client:
@@ -52,7 +54,7 @@ def load_products() -> dict:
                     "category_id": category_id,
                     "category_name": category_lookup.get(category_id, ""),
                 }
-                if variant.get("unit_value") == 1:
+                if variant.get("variant_unit") == "weight":
                     product_weight_array[variant["id"]] = p
                 else:
                     p["sku"] = variant.get("sku")

@@ -11,6 +11,7 @@ backend/creds
 backend/restore
 backend/error.log
 backend/poetry.lock
+backend/test.txt
 
 frontend/dist
 frontend/dev/assets/vendor
