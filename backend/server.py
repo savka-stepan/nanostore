@@ -100,13 +100,11 @@ async def handle_websocket(websocket):
                     .replace("Meta", "")
                     .lower()
                 )
-                print(f"Checking product code: {code}")
                 products_data = load_products()
                 product_array = products_data.get("product_array", {})
                 found = None
                 for key, p in product_array.items():
                     item_code = str(p.get("sku", "")).lower()
-                    print(f"Checking product code={item_code}")
                     if item_code == code:
                         found = {
                             "exist": True,

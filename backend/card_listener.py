@@ -9,7 +9,7 @@ WEBSOCKET_PORT = 8765
 
 
 async def send_card_uid(card_uid):
-    uri = f"ws://localhost:{WEBSOCKET_PORT}/"
+    uri = f"ws://localhost:{WEBSOCKET_PORT}"
     async with websockets.connect(uri) as websocket:
         await websocket.send(f'{{"type": "open_door", "code": "{card_uid}"}}')
         print(f"Sent open_door for card UID: {card_uid}")
