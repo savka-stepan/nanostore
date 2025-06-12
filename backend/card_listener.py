@@ -19,7 +19,7 @@ def main():
     print("Starting card listener...")
     while True:
         # TODO: For production, get device from database or config
-        device = None
+        device = "ACS ACR122U 00 00"
         card_uid = get_card_uid(device)
         if card_uid:
             asyncio.run(send_card_uid(card_uid))
