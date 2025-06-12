@@ -47,9 +47,9 @@ function handleWSMessage(event) {
     // Save session_id if received from backend
     if (msg.type === 'session_id' && msg.session_id) {
       localStorage.setItem('session_id', msg.session_id)
-    } else if (msg.type === 'uid') {
+    } else if (msg.type === 'customer_code') {
       sendWS({ type: 'check_customer_code', code: msg.code })
-    } else if (msg.type === 'check_customer_code') {
+    } else if (msg.type === 'customer_code_checked') {
       if (msg.exist) {
         webSocketMessage.value = 'Willkommen, ' + msg.full_name + '!'
         webSocketSnackbar.value = true

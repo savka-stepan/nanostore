@@ -53,26 +53,30 @@ async def handle_websocket(websocket):
                     json.dumps({"type": "session_id", "session_id": session_id})
                 )
 
-            # Login (card scan)
-            if msg and msg.get("type") == "login":
-                uid = get_card_uid()
-                await websocket.send(json.dumps({"type": "uid", "code": uid}))
+            # Open door (card scan listener) Entrance
+            if msg.get("type") == "open_door":
+                # TODO: For production, get timeout from database
+                # timeout = get_setting_from_db("timeout", 8000)
+                timeout = 8000
+                trigger_relay(timeout)
+                await websocket.send(json.dumps({"type": "open_door", "status": "Ok"}))
 
-            # Check code (card scan)
+            # Login (card scan listener) POS
+            elif msg and msg.get("type") == "login":
+                card_uid = get_card_uid()
+                await websocket.send(
+                    json.dumps({"type": "customer_code", "code": card_uid})
+                )
+
+            # Check code, log in the shopping cart
             elif msg.get("type") == "check_customer_code":
                 code = msg.get("code")
                 customers = fetch_customers()
                 customer_data = find_customer_by_code(code, customers)
                 # Save customer data for this session
                 SESSION_CUSTOMERS[session_id] = customer_data
-                # TODO: For production uncomment the next lines
-                if customer_data.get("exist"):
-                    # TODO: For production, get timeout from database
-                    # timeout = get_setting_from_db("timeout", 8000)
-                    timeout = 8000
-                    trigger_relay(timeout)
                 await websocket.send(
-                    json.dumps({"type": "check_customer_code", **customer_data})
+                    json.dumps({"type": "customer_code_checked", **customer_data})
                 )
 
             # Cart logic
