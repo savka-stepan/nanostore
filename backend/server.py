@@ -63,7 +63,9 @@ async def handle_websocket(websocket):
 
             # Login (card scan listener) POS
             elif msg and msg.get("type") == "login":
-                card_uid = get_card_uid()
+                # TODO: For production, get device from database or config
+                device = None
+                card_uid = get_card_uid(device)
                 await websocket.send(
                     json.dumps({"type": "customer_code", "code": card_uid})
                 )

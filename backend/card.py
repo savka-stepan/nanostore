@@ -4,10 +4,15 @@ from smartcard.Exceptions import CardRequestTimeoutException
 from smartcard import util
 
 
-def get_card_uid() -> str | None:
-    """Wait for a smartcard and return its UID."""
+def get_card_uid(device: str = None) -> str | None:
+    """Wait for a smartcard and return its UID from a specific device/reader."""
     card_type = AnyCardType()
-    request = CardRequest(timeout=0, cardType=card_type)
+    # If device is specified, use it as the reader
+    request_kwargs = {"timeout": 0, "cardType": card_type}
+    if device:
+        request_kwargs["reader"] = device
+
+    request = CardRequest(**request_kwargs)
 
     while True:
         try:
