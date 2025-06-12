@@ -1,37 +1,47 @@
-from smartcard.CardRequest import CardRequest
-from smartcard.CardType import AnyCardType
+from smartcard.System import readers
 from smartcard.Exceptions import CardRequestTimeoutException
-from smartcard import util
+from smartcard.util import toBytes, toHexString
+
+import time
 
 
 def get_card_uid(device: str = None) -> str | None:
     """Wait for a smartcard and return its UID from a specific device/reader."""
-    card_type = AnyCardType()
-    # If device is specified, use it as the reader
-    request_kwargs = {"timeout": 0, "cardType": card_type}
-    if device:
-        request_kwargs["reader"] = device
+    all_readers = readers()
+    if not all_readers:
+        print("No smartcard readers found.")
+        return None
 
-    request = CardRequest(**request_kwargs)
+    # Select the reader by name if provided, else use the first one
+    reader = None
+    if device:
+        for r in all_readers:
+            if device in str(r):
+                reader = r
+                break
+        if not reader:
+            print(f"Reader '{device}' not found.")
+            return None
+    else:
+        reader = all_readers[0]
 
     while True:
         try:
-            service = request.waitforcard()
-            conn = service.connection
-            conn.connect()
-
-            command = util.toBytes("FF CA 00 00 00")
-            data, sw1, sw2 = conn.transmit(command)
-
-            uid = util.toHexString(data).replace(" ", "")
+            connection = reader.createConnection()
+            connection.connect()
+            command = toBytes("FF CA 00 00 00")
+            data, sw1, sw2 = connection.transmit(command)
+            uid = toHexString(data).replace(" ", "")
             status = f"{sw1:02X} {sw2:02X}"
-
             if status == "90 00":
                 return uid.lower()
             else:
                 print(f"Invalid card status: {status}")
         except CardRequestTimeoutException:
             pass
+        except Exception as e:
+            # If no card is present or another error occurs, just continue
+            time.sleep(0.1)
 
 
 # # Test function to simulate card UID retrieval
