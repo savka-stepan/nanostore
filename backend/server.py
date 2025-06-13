@@ -59,6 +59,7 @@ async def handle_websocket(websocket):
                 # timeout = get_setting_from_db("timeout", 8000)
                 timeout = 8000
                 trigger_relay(timeout)
+                print(f"Door opened for session {session_id}")
                 await websocket.send(json.dumps({"type": "open_door", "status": "Ok"}))
 
             # Login (card scan listener) POS
@@ -252,6 +253,7 @@ async def main():
     print(f"Starting WebSocket server on ws://localhost:{WEBSOCKET_PORT}")
     async with websockets.serve(handle_websocket, "localhost", WEBSOCKET_PORT):
         await asyncio.Future()  # run forever
+    print("WebSocket server stopped.")
 
 
 if __name__ == "__main__":

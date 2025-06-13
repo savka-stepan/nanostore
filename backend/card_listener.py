@@ -22,7 +22,11 @@ def main():
         device = "ACS ACR122U 00 00"
         card_uid = get_card_uid(device)
         if card_uid:
-            asyncio.run(send_card_uid(card_uid))
+            try:
+                asyncio.run(send_card_uid(card_uid))
+            except Exception as e:
+                print(f"Error sending card UID: {e}")
+            time.sleep(1)
         else:
             time.sleep(0.1)
 
