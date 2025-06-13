@@ -2,6 +2,7 @@ from smartcard.System import readers
 from smartcard.Exceptions import CardRequestTimeoutException
 from smartcard.util import toBytes, toHexString
 
+import asyncio
 import time
 
 
@@ -42,6 +43,11 @@ def get_card_uid(device: str = None) -> str | None:
         except Exception as e:
             # If no card is present or another error occurs, just continue
             time.sleep(0.1)
+
+
+async def get_card_uid_async(device: str = None) -> str | None:
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, get_card_uid, device)
 
 
 # # Test function to simulate card UID retrieval

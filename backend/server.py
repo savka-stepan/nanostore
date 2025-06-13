@@ -6,7 +6,7 @@ import uuid
 import re
 
 from db import get_setting_from_db
-from card import get_card_uid
+from card import get_card_uid_async
 from cart import (
     get_cart_for_session,
     add_product_to_cart,
@@ -66,7 +66,7 @@ async def handle_websocket(websocket):
             elif msg and msg.get("type") == "login":
                 # TODO: For production, get device from database or config
                 device = "ACS ACR122U 01 00"
-                card_uid = get_card_uid(device)
+                card_uid = await get_card_uid_async(device)
                 await websocket.send(
                     json.dumps({"type": "customer_code", "code": card_uid})
                 )
