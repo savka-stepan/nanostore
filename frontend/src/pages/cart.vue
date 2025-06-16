@@ -154,6 +154,7 @@ const gramm = ref('0.000 kg')
 const weightPrice = ref(0)
 const showProductNameError = ref(false)
 const productNameError = ref('')
+const weightInterval = ref(null)
 
 const handleWSOpen = () => {
   console.log('WebSocket connection established')
@@ -190,10 +191,6 @@ function handleWSMessage(event) {
         if (showWeightModal.value) {
           sendWS({ type: 'weight' })
         }
-      }
-      if (msg.error) {
-        gramm.value = msg.error
-        sendWS({ type: 'stop_weight' })
       }
     }
 
@@ -282,12 +279,20 @@ const openWeightModal = (product) => {
   showWeightModal.value = true
   gramm.value = '0.000 kg'
   weightPrice.value = 0
-  sendWS({ type: 'weight' })
+
+  // Start polling for weight every 0.5 seconds
+  sendWS({ type: 'weight' });
+  weightInterval.value = setInterval(() => {
+    sendWS({ type: 'weight' })
+  }, 500)
 }
 
 const closeWeightModal = () => {
   showWeightModal.value = false
-  sendWS({ type: 'stop_weight' })
+  if (weightInterval.value) {
+    clearInterval(weightInterval.value)
+    weightInterval.value = null
+  }
 }
 
 const addWeightedProduct = () => {
