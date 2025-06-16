@@ -185,7 +185,6 @@ async def handle_websocket(websocket):
             # Weight (for weighted products)
             elif msg.get("type") == "weight":
                 port = get_scale_port()
-                print(f"Scale port: {port}")
                 if not port:
                     await websocket.send(
                         json.dumps({"type": "weight", "error": "Scale not found"})
@@ -195,17 +194,14 @@ async def handle_websocket(websocket):
                     try:
                         while True:
                             line = ser.readline().decode(errors="ignore")
-                            print(f"Received weight line: {line.strip()}")
                             if line:
                                 match = re.search(r"([-+]?\d*\.\d+|\d+)", line)
-                                print(f"Weight match: {match}")
                                 if match:
                                     weight = match.group(0)
-                                    print(f"Parsed weight: {weight}")
                                     await websocket.send(
                                         json.dumps({"type": "weight", "value": weight})
                                     )
-                            await asyncio.sleep(0.5)  # Send every 0.5 seconds
+                            await asyncio.sleep(1)
 
                             # Check if the client sent a stop message (e.g., when modal closes)
                             try:
