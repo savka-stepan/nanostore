@@ -202,10 +202,13 @@ async def handle_websocket(websocket):
                                     await websocket.send(
                                         json.dumps({"type": "weight", "value": weight})
                                     )
+                            # Await 1 second
+                            await asyncio.sleep(1)
+
                             # Check if the client sent a stop message (e.g., when modal closes)
                             try:
                                 stop_msg = await asyncio.wait_for(
-                                    websocket.recv(), timeout=1
+                                    websocket.recv(), timeout=0.01
                                 )
                                 try:
                                     stop_data = json.loads(stop_msg)
