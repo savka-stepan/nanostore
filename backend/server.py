@@ -191,23 +191,30 @@ async def handle_websocket(websocket):
                     )
                     continue
                 with serial.Serial(port, BAUDRATE, timeout=1) as ser:
-                    while True:
-                        line = ser.readline().decode(errors="ignore")
-                        if line:
-                            # Extract the numeric value from the scale output
-                            match = re.search(r"([-+]?\d*\.\d+|\d+)", line)
-                            if match:
-                                weight = match.group(0)
-                                await websocket.send(
-                                    json.dumps({"type": "weight", "value": weight})
+                    try:
+                        while True:
+                            line = ser.readline().decode(errors="ignore")
+                            if line:
+                                match = re.search(r"([-+]?\d*\.\d+|\d+)", line)
+                                if match:
+                                    weight = match.group(0)
+                                    await websocket.send(
+                                        json.dumps({"type": "weight", "value": weight})
+                                    )
+                            await asyncio.sleep(0.5)  # Send every 0.5 seconds
+                            # Optionally, break the loop if the client sends a stop message
+                            try:
+                                msg = await asyncio.wait_for(
+                                    websocket.recv(), timeout=0.01
                                 )
-                        try:
-                            if (
-                                await asyncio.wait_for(websocket.recv(), timeout=0.1)
-                            ) != "weight":
-                                break
-                        except asyncio.TimeoutError:
-                            continue
+                                if msg != "weight":
+                                    break
+                            except asyncio.TimeoutError:
+                                continue
+                    except Exception as e:
+                        await websocket.send(
+                            json.dumps({"type": "weight", "error": str(e)})
+                        )
 
             # Checkout logic
             elif msg.get("type") == "checkout":
