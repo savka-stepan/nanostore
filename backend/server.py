@@ -191,34 +191,39 @@ async def handle_websocket(websocket):
                     )
                     continue
                 try:
-                    with serial.Serial(port, BAUDRATE, timeout=1) as ser:
+                    with serial.Serial(port, BAUDRATE, timeout=0.1) as ser:
                         while True:
-                            line = ser.readline().decode(errors="ignore")
-                            if line:
-                                match = re.search(r"([-+]?\d*\.\d+|\d+)", line)
-                                if match:
-                                    weight = match.group(0)
-                                    print(f"Weight received: {weight}")
-                                    await websocket.send(
-                                        json.dumps({"type": "weight", "value": weight})
-                                    )
-                            # Await 1 second
-                            await asyncio.sleep(1)
+                            # Wait for either a new line from the scale or a stop message
+                            read_task = asyncio.get_event_loop().run_in_executor(
+                                None, ser.readline
+                            )
+                            recv_task = asyncio.create_task(websocket.recv())
+                            done, pending = await asyncio.wait(
+                                [read_task, recv_task],
+                                return_when=asyncio.FIRST_COMPLETED,
+                            )
 
-                            # Check if the client sent a stop message (e.g., when modal closes)
-                            try:
-                                stop_msg = await asyncio.wait_for(
-                                    websocket.recv(), timeout=0.01
-                                )
+                            if recv_task in done:
+                                stop_msg = await recv_task
                                 try:
                                     stop_data = json.loads(stop_msg)
                                     if stop_data.get("type") == "stop_weight":
                                         break
                                 except Exception:
-                                    # Not a JSON object, ignore
                                     pass
-                            except asyncio.TimeoutError:
-                                continue
+
+                            if read_task in done:
+                                line = await read_task
+                                if line:
+                                    line = line.decode(errors="ignore")
+                                    match = re.search(r"([-+]?\d*\.\d+|\d+)", line)
+                                    if match:
+                                        weight = match.group(0)
+                                        await websocket.send(
+                                            json.dumps(
+                                                {"type": "weight", "value": weight}
+                                            )
+                                        )
                 except Exception as e:
                     await websocket.send(
                         json.dumps({"type": "weight", "error": str(e)})
