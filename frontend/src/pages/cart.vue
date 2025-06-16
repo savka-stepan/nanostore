@@ -182,7 +182,7 @@ function handleWSMessage(event) {
       productWeightArray.value = msg.product_weight_array || {}
     }
 
-    if (msg.type === 'weight' && typeof msg.value === 'string') {
+    if (msg.type === 'weight' && msg.value) {
       gramm.value = msg.value + ' kg'
       const weightNum = Number(msg.value.replace(',', '.'))
       weightPrice.value = (weightNum * Number(weightProduct.value.price)).toFixed(2)
