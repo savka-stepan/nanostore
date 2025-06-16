@@ -192,33 +192,32 @@ async def handle_websocket(websocket):
                     continue
                 try:
                     with serial.Serial(port, BAUDRATE, timeout=0.1) as ser:
-                        while True:
-                            # Read from scale
-                            line = ser.readline().decode(errors="ignore")
-                            if line:
-                                match = re.search(r"([-+]?\d*\.\d+|\d+)", line)
-                                if match:
-                                    weight = match.group(0)
-                                    print(f"Weight read: {weight}")
-                                    await websocket.send(
-                                        json.dumps({"type": "weight", "value": weight})
-                                    )
-                            # Await 1 second before next read
-                            await asyncio.sleep(1)
-
-                            # After sending, check for stop message with timeout
-                            try:
-                                stop_msg = await asyncio.wait_for(
-                                    websocket.recv(), timeout=0.1
+                        # Read from scale
+                        line = ser.readline().decode(errors="ignore")
+                        if line:
+                            match = re.search(r"([-+]?\d*\.\d+|\d+)", line)
+                            if match:
+                                weight = match.group(0)
+                                print(f"Weight read: {weight}")
+                                await websocket.send(
+                                    json.dumps({"type": "weight", "value": weight})
                                 )
-                                try:
-                                    stop_data = json.loads(stop_msg)
-                                    if stop_data.get("type") == "stop_weight":
-                                        break
-                                except Exception:
-                                    pass
-                            except asyncio.TimeoutError:
-                                continue
+                        # Await 1 second before next read
+                        await asyncio.sleep(1)
+
+                        # After sending, check for stop message with timeout
+                        try:
+                            stop_msg = await asyncio.wait_for(
+                                websocket.recv(), timeout=0.1
+                            )
+                            try:
+                                stop_data = json.loads(stop_msg)
+                                if stop_data.get("type") == "stop_weight":
+                                    break
+                            except Exception:
+                                pass
+                        except asyncio.TimeoutError:
+                            continue
                 except Exception as e:
                     await websocket.send(
                         json.dumps({"type": "weight", "error": str(e)})
