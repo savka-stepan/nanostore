@@ -191,7 +191,7 @@ async def handle_websocket(websocket):
                     )
                     continue
                 try:
-                    with serial.Serial(port, BAUDRATE, timeout=1) as ser:
+                    with serial.Serial(port, BAUDRATE, timeout=0.1) as ser:
                         while True:
                             # Read from scale
                             line = ser.readline().decode(errors="ignore")
@@ -203,6 +203,9 @@ async def handle_websocket(websocket):
                                     await websocket.send(
                                         json.dumps({"type": "weight", "value": weight})
                                     )
+                            # Await 1 second before next read
+                            await asyncio.sleep(1)
+
                             # After sending, check for stop message with timeout
                             try:
                                 stop_msg = await asyncio.wait_for(
