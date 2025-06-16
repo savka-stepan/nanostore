@@ -207,8 +207,13 @@ async def handle_websocket(websocket):
                                 stop_msg = await asyncio.wait_for(
                                     websocket.recv(), timeout=1
                                 )
-                                if stop_msg == "stop_weight":
-                                    break
+                                try:
+                                    stop_data = json.loads(stop_msg)
+                                    if stop_data.get("type") == "stop_weight":
+                                        break
+                                except Exception:
+                                    # Not a JSON object, ignore
+                                    pass
                             except asyncio.TimeoutError:
                                 continue
                 except Exception as e:
