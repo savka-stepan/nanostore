@@ -190,8 +190,8 @@ async def handle_websocket(websocket):
                         json.dumps({"type": "weight", "error": "Scale not found"})
                     )
                     continue
-                with serial.Serial(port, BAUDRATE, timeout=1) as ser:
-                    try:
+                try:
+                    with serial.Serial(port, BAUDRATE, timeout=1) as ser:
                         while True:
                             line = ser.readline().decode(errors="ignore")
                             if line:
@@ -202,21 +202,19 @@ async def handle_websocket(websocket):
                                     await websocket.send(
                                         json.dumps({"type": "weight", "value": weight})
                                     )
-                            await asyncio.sleep(1)
-
                             # Check if the client sent a stop message (e.g., when modal closes)
                             try:
                                 stop_msg = await asyncio.wait_for(
-                                    websocket.recv(), timeout=0.01
+                                    websocket.recv(), timeout=1
                                 )
                                 if stop_msg == "stop_weight":
                                     break
                             except asyncio.TimeoutError:
                                 continue
-                    except Exception as e:
-                        await websocket.send(
-                            json.dumps({"type": "weight", "error": str(e)})
-                        )
+                except Exception as e:
+                    await websocket.send(
+                        json.dumps({"type": "weight", "error": str(e)})
+                    )
 
             # Checkout logic
             elif msg.get("type") == "checkout":
