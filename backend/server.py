@@ -191,7 +191,7 @@ async def handle_websocket(websocket):
                     )
                     continue
                 try:
-                    with serial.Serial(port, BAUDRATE, timeout=0.1) as ser:
+                    with serial.Serial(port, BAUDRATE, timeout=1) as ser:
                         line = ser.readline().decode(errors="ignore")
                         if line:
                             match = re.search(r"([-+]?\d*\.\d+|\d+)", line)
