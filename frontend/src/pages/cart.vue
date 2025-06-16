@@ -118,7 +118,7 @@
     </VCard>
 
     <!-- Weighted Product Modal -->
-    <VDialog v-model="showWeightModal" max-width="400">
+    <VDialog v-model="showWeightModal" @update:modelValue="val => { if (!val) closeWeightModal() }" max-width="400">
       <template #default>
         <VCard>
           <VCardTitle>
@@ -182,12 +182,18 @@ function handleWSMessage(event) {
       productWeightArray.value = msg.product_weight_array || {}
     }
 
-    if (msg.type === 'weight' && msg.value) {
-      gramm.value = msg.value + ' kg'
-      const weightNum = Number(msg.value.replace(',', '.'))
-      weightPrice.value = (weightNum * Number(weightProduct.value.price)).toFixed(2)
-      if (showWeightModal.value) {
-        sendWS({ type: 'weight' })
+    if (msg.type === 'weight') {
+      if (msg.value) {
+        gramm.value = msg.value + ' kg'
+        const weightNum = Number(msg.value.replace(',', '.'))
+        weightPrice.value = (weightNum * Number(weightProduct.value.price)).toFixed(2)
+        if (showWeightModal.value) {
+          sendWS({ type: 'weight' })
+        }
+      }
+      if (msg.error) {
+        gramm.value = msg.error
+        sendWS({ type: 'stop_weight' })
       }
     }
 
@@ -281,6 +287,7 @@ const openWeightModal = (product) => {
 
 const closeWeightModal = () => {
   showWeightModal.value = false
+  sendWS({ type: 'stop_weight' })
 }
 
 const addWeightedProduct = () => {
