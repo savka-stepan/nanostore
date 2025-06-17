@@ -91,13 +91,6 @@ const handleWSClose = () => {
   console.log('WebSocket connection failed')
 }
 
-const { connectWS, sendWS, closeWS } = createWebSocket(
-  'ws://localhost:8765/',
-  handleWSMessage,
-  handleWSOpen,
-  handleWSClose
-)
-
 function handleWSMessage(event) {
   try {
     const msg = JSON.parse(event.data)
@@ -112,13 +105,20 @@ function handleWSMessage(event) {
   }
 }
 
+const { connectWS, sendWS, closeWS } = createWebSocket(
+  'ws://localhost:8765/',
+  handleWSMessage,
+  handleWSOpen,
+  handleWSClose
+)
+
 function initStripe() {
   stripeLoading.value = true
   if (!window.Stripe) {
     stripeLoading.value = false
     return
   }
-  stripe = window.Stripe('pk_test_...') // Replace with your publishable key
+  const stripe = window.Stripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
   elements = stripe.elements()
   if (!ibanElement) {
     ibanElement = elements.create('iban', { supportedCountries: ['SEPA'] })
@@ -161,10 +161,11 @@ async function pay() {
   paying.value = true
   error.value = ''
   try {
-    const response = await fetch('/stripe/create-payment-intent', {
+    // Get clientSecret from backend
+    const response = await fetch('https://ofn.hof-homann.de/api/create-payment-intent/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ order_id: order_id, total: order.value.total })
+      body: JSON.stringify({ order_id: order.value.id, total: order.value.total })
     })
     const data = await response.json()
     if (data.clientSecret) {
