@@ -118,7 +118,7 @@ function initStripe() {
     stripeLoading.value = false
     return
   }
-  const stripe = window.Stripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
+  const stripe = window.Stripe(import.meta.env.STRIPE_PUBLISHABLE_KEY)
   elements = stripe.elements()
   if (!ibanElement) {
     ibanElement = elements.create('iban', { supportedCountries: ['SEPA'] })
