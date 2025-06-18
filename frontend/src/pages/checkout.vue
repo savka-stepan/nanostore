@@ -94,7 +94,7 @@ const handleWSClose = () => {
 function handleWSMessage(event) {
   try {
     const msg = JSON.parse(event.data)
-    if (msg.type === 'init_payment') {
+    if (msg.type === 'init_checkout') {
       order.value = msg.order
       loading.value = false
       setTimeout(initStripe, 100)
@@ -118,7 +118,7 @@ function initStripe() {
     stripeLoading.value = false
     return
   }
-  const stripe = window.Stripe(import.meta.env.STRIPE_PUBLISHABLE_KEY)
+  stripe = window.Stripe(import.meta.env.STRIPE_PUBLISHABLE_KEY)
   elements = stripe.elements()
   if (!ibanElement) {
     ibanElement = elements.create('iban', { supportedCountries: ['SEPA'] })

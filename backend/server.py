@@ -224,9 +224,9 @@ async def handle_websocket(websocket):
                     payment_method_id,
                 )
 
-                print(f"Order created: {order}")
-
-                # await websocket.send(json.dumps({"type": "init_payment", "order": order}))
+                await websocket.send(
+                    json.dumps({"type": "init_checkout", "order": order})
+                )
 
             # Get confirmation msg from db
             elif msg.get("type") == "get_confirmation":
