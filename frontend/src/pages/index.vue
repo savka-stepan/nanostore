@@ -9,6 +9,11 @@
       <div class="d-flex justify-center my-4">
         <VIcon size="64" icon="tabler-app-window" />
       </div>
+      <div class="d-flex justify-center my-4">
+        <VBtn color="primary" @click="startCardScan">
+          Karte scannen
+        </VBtn>
+      </div>
     </VCard>
     <VSnackbar v-model="webSocketSnackbar" :timeout="3000" :color="webSocketSnackbarColor" location="top end">
       {{ webSocketMessage }}
@@ -34,7 +39,6 @@ const handleWSOpen = () => {
   webSocketMessage.value = 'WebSocket connection established'
   webSocketSnackbarColor.value = 'primary'
   webSocketSnackbar.value = true
-  sendWS({ type: 'login' })
 }
 
 const handleWSClose = () => {
@@ -77,20 +81,22 @@ function handleWSMessage(event) {
   }
 }
 
+function startCardScan() {
+  sendWS({ type: 'login' })
+}
+
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-let connectWS, sendWS, closeWS
+const { connectWS, sendWS, closeWS } = createWebSocket(
+  'ws://localhost:8765/',
+  handleWSMessage,
+  handleWSOpen,
+  handleWSClose
+)
 
 onMounted(() => {
-  // Pass open and close handlers to your helper
-  ({ connectWS, sendWS, closeWS } = createWebSocket(
-    'ws://localhost:8765/',
-    handleWSMessage,
-    handleWSOpen,
-    handleWSClose
-  ))
   connectWS()
 })
 
