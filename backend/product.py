@@ -51,6 +51,7 @@ def load_products() -> dict:
                         else f"https://openfoodnetwork.de{variant.get('image', '')}"
                     ),
                     "price": variant.get("price"),
+                    "unit_value": float(variant.get("unit_value", 1)),
                     "category_id": category_id,
                     "category_name": category_lookup.get(category_id, ""),
                 }
