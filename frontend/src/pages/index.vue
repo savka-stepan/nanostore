@@ -18,7 +18,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { createWebSocket } from '@/utils/helpers'
+
+const router = useRouter()
 
 const welcomeH1 = ref('Herzlich Willkommen')
 const welcomeH2 = ref('Bitte lege deine Kundenkarte auf den Kartenleser rechts vom Bildschirm, um dich anzumelden und zu starten')
@@ -55,7 +58,7 @@ function handleWSMessage(event) {
         webSocketMessage.value = 'Willkommen, ' + msg.full_name + '!'
         webSocketSnackbar.value = true
         sleep(2000).then(() => {
-          window.location.href = '/cart'
+          router.push('/cart')
         })
       } else {
         welcomeH2.value = '❌ Kein gültiger Benutzer'

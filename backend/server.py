@@ -231,7 +231,9 @@ async def handle_websocket(websocket):
             # Get confirmation msg from db
             elif msg.get("type") == "get_confirmation":
                 confirmation = msg.get("confirmation")
-                value = get_setting_from_db(confirmation, "")
+                # TODO: Get the value from the database
+                # value = get_setting_from_db(confirmation, "")
+                value = "Your confirmation message here"
                 await websocket.send(
                     json.dumps(
                         {

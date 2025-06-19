@@ -142,7 +142,10 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
 import { createWebSocket, formatPrice } from '@/utils/helpers'
+
+const router = useRouter()
 
 const cart = ref([])
 const code = ref('')
@@ -189,7 +192,7 @@ function handleWSMessage(event) {
     }
 
     if (msg.type === 'session' && msg.session === false) {
-      window.location.href = '/'
+      router.push('/')
     }
 
     if (msg.type === 'search_product_code') {
@@ -250,12 +253,12 @@ const total = computed(() =>
 
 const checkout = () => {
   if (total.value < 0.5) return
-  window.location.href = '/checkout'
+  router.push('/checkout')
 }
 
 const cancel = () => {
   sendWS({ type: 'delete_cart' })
-  window.location.href = '/'
+  router.push('/')
 }
 
 const handleProductCode = (codeValue) => {

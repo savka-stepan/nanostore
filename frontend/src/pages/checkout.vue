@@ -87,10 +87,6 @@
           </VBtn>
         </div>
 
-        <VAlert v-if="success" type="success" variant="tonal" class="mt-4">
-          Zahlung erfolgreich! Die Bestätigung kann einen Moment dauern. Vielen Dank für Ihren Einkauf.
-        </VAlert>
-
       </div>
     </VCardText>
   </VCard>
@@ -98,13 +94,14 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
 import { createWebSocket, formatPrice } from '@/utils/helpers'
 
+const router = useRouter()
 const order = ref(null)
 const loading = ref(true)
 const error = ref('')
 const paying = ref(false)
-const success = ref(false)
 const stripeLoading = ref(true)
 
 let stripe = null
@@ -182,9 +179,11 @@ async function confirmSepaPayment() {
   if (stripeError) {
     error.value = stripeError.message
     paying.value = false
-  } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-    success.value = true
+  } else if (paymentIntent && (paymentIntent.status === 'succeeded' || paymentIntent.status === 'processing')) {
     paying.value = false
+    router.push('/confirmation')
+  } else {
+    paying.value = false;
   }
 }
 
@@ -215,7 +214,7 @@ async function pay() {
 
 const cancel = () => {
   sendWS({ type: 'delete_cart' })
-  window.location.href = '/'
+  router.push('/')
 }
 
 onMounted(() => {
