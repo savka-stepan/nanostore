@@ -65,6 +65,7 @@ function goToWelcome() {
 onMounted(() => {
   connectWS()
   sendWS({ type: 'get_confirmation', key: 'confirmation-h1' })
+  sendWS({ type: 'delete_cart' })
   redirectTimeout = setTimeout(goToWelcome, 10000)
 })
 
