@@ -1,8 +1,9 @@
 <template>
   <div>
-    <VCard class="mx-auto my-8" max-width="900">
-      <VCardTitle class="d-flex justify-center my-4">
-        {{ welcomeH1 }}
+    <VCard class="mx-auto my-8 pa-6" max-width="900" elevation="10">
+      <VCardTitle class="d-flex align-center mb-4">
+        <VIcon icon="tabler-heart-handshake" color="primary" class="me-2" size="32" />
+        <span class="text-h5 font-weight-bold">{{ welcomeH1 }}</span>
       </VCardTitle>
       <VCardText class="d-flex justify-center my-4">{{ welcomeH2 }}</VCardText>
       <div class="d-flex justify-center my-4">
@@ -19,7 +20,7 @@
 import { ref, onMounted } from 'vue'
 import { createWebSocket } from '@/utils/helpers'
 
-const welcomeH1 = ref('Herzlich Willkommen 🚀')
+const welcomeH1 = ref('Herzlich Willkommen')
 const welcomeH2 = ref('Bitte lege deine Kundenkarte auf den Kartenleser rechts vom Bildschirm, um dich anzumelden und zu starten')
 
 const webSocketSnackbar = ref(false)

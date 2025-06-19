@@ -1,8 +1,9 @@
 <template>
   <div>
-    <VCard class="mx-auto my-8" max-width="900">
-      <VCardTitle>
-        <span class="text-h5">🛒 Warenkorb</span>
+    <VCard class="mx-auto my-8 pa-6" max-width="900" elevation="10">
+      <VCardTitle class="d-flex align-center mb-4">
+        <VIcon icon="tabler-shopping-cart" color="primary" class="me-2" size="32" />
+        <span class="text-h5 font-weight-bold">Warenkorb</span>
       </VCardTitle>
       <VCardText>
         <VSnackbar v-model="showProductNameError" :timeout="3000" color="error" location="top end">
@@ -76,10 +77,10 @@
     </VCard>
 
     <!-- Weighted products list with Category Buttons -->
-    <VCard class="mx-auto my-8" max-width="900">
-      <VCardTitle>
-        <VIcon icon="tabler-scale" class="me-2" />
-        <span class="text-h5">Produkte nach Gewicht</span>
+    <VCard class="mx-auto my-8 pa-6" max-width="900" elevation="10">
+      <VCardTitle class="d-flex align-center mb-4">
+        <VIcon icon="tabler-scale" color="primary" class="me-2" size="32" />
+        <span class="text-h5 font-weight-bold">Produkte nach Gewicht</span>
       </VCardTitle>
       <VCardText>
         <div class="mb-4">
@@ -164,13 +165,6 @@ const handleWSClose = () => {
   console.log('WebSocket connection failed')
 }
 
-const { connectWS, sendWS, closeWS } = createWebSocket(
-  'ws://localhost:8765/',
-  handleWSMessage,
-  handleWSOpen,
-  handleWSClose
-)
-
 function handleWSMessage(event) {
   try {
     const msg = JSON.parse(event.data)
@@ -229,6 +223,13 @@ function handleWSMessage(event) {
   }
 }
 
+const { connectWS, sendWS, closeWS } = createWebSocket(
+  'ws://localhost:8765/',
+  handleWSMessage,
+  handleWSOpen,
+  handleWSClose
+)
+
 const fetchCart = () => {
   sendWS({ type: 'get_cart' })
   sendWS({ type: 'load_products' })
@@ -249,7 +250,6 @@ const total = computed(() =>
 
 const checkout = () => {
   if (total.value < 0.5) return
-  sendWS({ type: 'checkout', cart: cart.value })
   window.location.href = '/checkout'
 }
 

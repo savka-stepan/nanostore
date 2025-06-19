@@ -289,4 +289,9 @@ def create_ofn_order_from_session(
         mark_payment(session_tokens, order_id, payment_method_id, str(total))
 
     # Return order id, cart
-    return {"order_id": order_id, "cart": cart}
+    return {
+        "customer": customer_data,
+        "order_id": order_id,
+        "cart": cart,
+        "total": total,
+    }

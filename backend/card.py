@@ -45,12 +45,12 @@ def get_card_uid(device: str = None) -> str | None:
             time.sleep(0.1)
 
 
+# # Test function to simulate card UID retrieval
+# def get_card_uid(device: str = None) -> str | None:
+#     # For testing, return a fixed UID string
+#     return "e3429c04"
+
+
 async def get_card_uid_async(device: str = None) -> str | None:
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, get_card_uid, device)
-
-
-# # Test function to simulate card UID retrieval
-# def get_card_uid():
-#     # For testing, return a fixed UID string
-#     return "e3429c04"

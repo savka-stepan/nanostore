@@ -1,27 +1,35 @@
 <template>
-  <VCard class="mx-auto my-8" max-width="900">
-    <VCardTitle>
-      <span class="text-h5">💳 Kasse</span>
+  <VCard class="mx-auto my-8 pa-6" max-width="900" elevation="10">
+    <VCardTitle class="d-flex align-center mb-4">
+      <VIcon icon="tabler-credit-card" color="primary" class="me-2" size="32" />
+      <span class="text-h5 font-weight-bold">Kasse</span>
     </VCardTitle>
     <VCardText>
       <VAlert v-if="loading" type="info" variant="tonal" class="mb-4">
+        <VProgressCircular indeterminate color="primary" size="20" class="me-2" />
         Lade Bestelldaten...
       </VAlert>
       <VAlert v-if="error" type="error" variant="tonal" class="mb-4">
         {{ error }}
       </VAlert>
-      <div v-if="order && order.customer">
-        <div class="mb-2">
-          <label>Name</label>
-          <input class="form-control" type="text" :value="order.customer.name" disabled>
-        </div>
-        <div class="mb-2">
-          <label>Email</label>
-          <input class="form-control" type="text" :value="order.customer.email" disabled>
-        </div>
-      </div>
+
+      <VRow v-if="order && order.customer" class="mb-4" dense>
+        <VCol cols="12" md="4">
+          <VTextField label="Name" :model-value="order.customer.full_name" prepend-inner-icon="tabler-user" readonly
+            variant="outlined" density="compact" />
+        </VCol>
+        <VCol cols="12" md="4">
+          <VTextField label="Email" :model-value="order.customer.email" prepend-inner-icon="tabler-mail" readonly
+            variant="outlined" density="compact" />
+        </VCol>
+      </VRow>
+
+      <VAlert type="info" variant="tonal" class="mb-4" v-if="order">
+        Überprüfen Sie Ihre Bestellung und geben Sie Ihre Zahlungsdaten ein, um den Kauf abzuschließen.
+      </VAlert>
+
       <div v-if="order">
-        <VTable class="mb-4">
+        <VTable class="mb-4 elevation-1 rounded-lg">
           <thead>
             <tr>
               <th>Produkt</th>
@@ -31,37 +39,58 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in order.items" :key="item.id">
-              <td>{{ item.name }}</td>
+            <tr v-for="item in order.cart" :key="item.id">
+              <td>
+                <div class="d-flex align-center">
+                  <VAvatar v-if="item.img" :image="item.img" size="32" class="me-2" />
+                  <span>{{ item.name }}</span>
+                </div>
+              </td>
               <td>{{ item.quantity }}</td>
               <td>{{ formatPrice(item.price) }}</td>
               <td>{{ formatPrice(item.price * item.quantity) }}</td>
             </tr>
           </tbody>
         </VTable>
-        <div class="mb-2">
-          <label>IBAN</label>
-          <div v-if="stripeLoading" class="d-flex align-center mb-2">
-            <VProgressCircular indeterminate color="primary" size="24" class="me-2" />
-            <span>Stripe wird initialisiert...</span>
-          </div>
-          <div v-show="!stripeLoading" id="iban-element" class="form-control"></div>
+
+        <VRow class="mb-2" align="center">
+          <VCol cols="12" md="6">
+            <VTextField label="IBAN" prepend-inner-icon="tabler-building-bank" readonly
+              :model-value="order.customer.iban" variant="outlined" density="compact" class="mb-2" />
+          </VCol>
+          <VCol cols="12" md="6">
+            <div>
+              <label class="font-weight-medium mb-1">Zahlungsdaten eingeben</label>
+              <div v-if="stripeLoading" class="d-flex align-center mb-2">
+                <VProgressCircular indeterminate color="primary" size="24" class="me-2" />
+                <span>Stripe wird initialisiert...</span>
+              </div>
+              <div v-show="!stripeLoading" id="iban-element" class="form-control rounded-lg border"
+                style="min-height: 48px; padding: 8px;"></div>
+            </div>
+          </VCol>
+        </VRow>
+
+        <VDivider class="my-4" />
+
+        <div class="d-flex justify-space-between align-center mb-4">
+          <span class="text-h6"></span>
+          <span class="text-h5 font-weight-bold text-primary">Summe: {{ formatPrice(order.total) }}</span>
         </div>
-        <div class="mb-4">
-          <div class="text-h6">Summe: <strong>{{ formatPrice(order.total) }}</strong></div>
-        </div>
-        <div class="mt-6 text-end">
-          <VProgressCircular v-if="paying" indeterminate color="primary" size="32" class="me-2 mb-2" />
+
+        <div class="d-flex justify-end align-center mt-4">
           <VBtn color="success" :loading="paying" @click="pay" :disabled="stripeLoading">
-            <VIcon icon="tabler-credit-card" class="me-2" /> Bestätigen und kaufe
+            <VIcon icon="tabler-credit-card" class="me-2" /> Bestätigen und kaufen
           </VBtn>
           <VBtn color="error" class="ms-2" @click="cancel" :disabled="stripeLoading">
             <VIcon icon="tabler-x" class="me-2" /> Kauf abbrechen und beenden
           </VBtn>
         </div>
-        <VAlert v-if="success" type="success" variant="tonal" class="mb-4">
+
+        <VAlert v-if="success" type="success" variant="tonal" class="mt-4">
           Zahlung erfolgreich! Die Bestätigung kann einen Moment dauern. Vielen Dank für Ihren Einkauf.
         </VAlert>
+
       </div>
     </VCardText>
   </VCard>
@@ -118,17 +147,20 @@ function initStripe() {
     stripeLoading.value = false
     return
   }
-  stripe = window.Stripe(import.meta.env.STRIPE_PUBLISHABLE_KEY)
+  stripe = window.Stripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
   elements = stripe.elements()
-  if (!ibanElement) {
-    ibanElement = elements.create('iban', { supportedCountries: ['SEPA'] })
-    ibanElement.mount('#iban-element')
-    ibanElement.on('ready', () => {
-      stripeLoading.value = false
-    })
-  } else {
-    stripeLoading.value = false
+  // Remove previous IBAN element if remounting
+  if (ibanElement) {
+    try {
+      ibanElement.unmount()
+    } catch (e) { }
+    ibanElement = null
   }
+  ibanElement = elements.create('iban', { supportedCountries: ['SEPA'] })
+  ibanElement.mount('#iban-element')
+  ibanElement.on('ready', () => {
+    stripeLoading.value = false
+  })
 }
 
 async function confirmSepaPayment() {
@@ -141,8 +173,8 @@ async function confirmSepaPayment() {
       payment_method: {
         sepa_debit: ibanElement,
         billing_details: {
-          name: order.value.customer.name,
-          email: order.value.customer.email,
+          name: order.value.customer.full_name || '',
+          email: order.value.customer.email || '',
         },
       },
     }
@@ -165,7 +197,7 @@ async function pay() {
     const response = await fetch('https://ofn.hof-homann.de/api/create-payment-intent/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ order_id: order.value.id, total: order.value.total })
+      body: JSON.stringify({ order_id: order.value.order_id, total: order.value.total })
     })
     const data = await response.json()
     if (data.clientSecret) {
@@ -188,6 +220,7 @@ const cancel = () => {
 
 onMounted(() => {
   connectWS()
+  sendWS({ type: 'checkout' })
 })
 
 onBeforeUnmount(() => {

@@ -38,25 +38,28 @@ def fetch_customers() -> list[dict]:
 
 def find_customer_by_code(code: str, customers: list[dict]) -> dict:
     """Find a customer by code in their tags."""
-    pattern = re.compile(rf"code[:=]{re.escape(code)}(\b|;|$)")
+    pattern = re.compile(rf"code[:=]{re.escape(code)}(\b|;|$)", re.IGNORECASE)
     for customer in customers:
+        code_found = False
+        iban = ""
+        # Search for code and IBAN in tags
         for tag in customer.get("tags", []):
             if pattern.search(tag):
-                name = f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip()
-                # Try to extract IBAN from the first tag (if present)
-                iban_full = str(tag)
-                iban = iban_full.split(":", 1)[1] if ":" in iban_full else ""
-                return {
-                    "exist": True,
-                    "id": customer.get("id"),
-                    "code": code,
-                    "full_name": name,
-                    "first_name": customer.get("first_name", ""),
-                    "last_name": customer.get("last_name", ""),
-                    "email": customer.get("email", ""),
-                    "iban": iban,
-                    # For compatibility
-                    "bill_address": customer.get("billing_address", {}),
-                    "ship_address": customer.get("shipping_address", {}),
-                }
+                code_found = True
+            if tag.lower().startswith("iban:"):
+                iban = tag.split(":", 1)[1].strip()
+        if code_found:
+            name = f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip()
+            return {
+                "exist": True,
+                "id": customer.get("id"),
+                "code": code,
+                "full_name": name,
+                "first_name": customer.get("first_name", ""),
+                "last_name": customer.get("last_name", ""),
+                "email": customer.get("email", ""),
+                "iban": iban,
+                "bill_address": customer.get("billing_address", {}),
+                "ship_address": customer.get("shipping_address", {}),
+            }
     return {"exist": False}
