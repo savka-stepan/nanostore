@@ -318,12 +318,19 @@ const closeWeightModal = () => {
 }
 
 const addWeightedProduct = () => {
+  const grammNumber = Math.round(Number(gramm.value.replace('kg', '').replace(',', '.').trim()) * 1000)
+  if (grammNumber <= 0) {
+    productNameError.value = 'Bitte ein gültiges Gewicht eingeben.'
+    showProductNameError.value = true
+    return
+  }
+
   sendWS({
     type: 'add_to_cart',
     id: weightProduct.value.id,
     name: weightProduct.value.name,
     price: Number(weightPrice.value),
-    quantity: 1,
+    quantity: grammNumber,
     img: weightProduct.value.image,
     gramm: gramm.value,
     category_id: weightProduct.value.category_id,
