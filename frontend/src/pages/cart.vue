@@ -185,8 +185,25 @@ function handleWSMessage(event) {
         gramm.value = msg.value + ' kg'
         const weightNum = Number(msg.value.replace(',', '.'))
         const unitValue = Number(weightProduct.value.unit_value)
+        const unit = weightProduct.value.unit || ''
         const pricePerUnit = Number(weightProduct.value.price)
-        weightPrice.value = ((weightNum / unitValue) * pricePerUnit).toFixed(2)
+
+        let weightInUnit = weightNum
+
+        if (unit.toLowerCase().includes('kg')) {
+          // If the unit is in kg, convert weightNum (kg) to the unit scale
+          // Example: unitValue = 1 (for 1kg), weightNum = 0.156 (kg)
+          weightInUnit = weightNum / unitValue
+        } else if (unit.toLowerCase().includes('g')) {
+          // If the unit is in g, convert weightNum (kg) to grams if needed
+          // Assume weightNum is in kg, convert to grams
+          weightInUnit = (weightNum * 1000) / unitValue
+        } else {
+          // Default: treat as grams
+          weightInUnit = weightNum / unitValue
+        }
+
+        weightPrice.value = (weightInUnit * pricePerUnit).toFixed(2)
         if (showWeightModal.value) {
           sendWS({ type: 'weight' })
         }

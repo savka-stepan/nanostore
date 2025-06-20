@@ -197,7 +197,6 @@ async def handle_websocket(websocket):
                             match = re.search(r"([-+]?\d*\.\d+|\d+)", line)
                             if match:
                                 weight = match.group(0)
-                                print(f"Weight read: {weight}")
                                 await websocket.send(
                                     json.dumps({"type": "weight", "value": weight})
                                 )

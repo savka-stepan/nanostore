@@ -52,6 +52,9 @@ def load_products() -> dict:
                     ),
                     "price": variant.get("price"),
                     "unit_value": float(variant.get("unit_value", 1)),
+                    "unit": variant.get("unit_to_display")
+                    or variant.get("options_text")
+                    or "",
                     "category_id": category_id,
                     "category_name": category_lookup.get(category_id, ""),
                 }
