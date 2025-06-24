@@ -9,11 +9,13 @@ BACKEND_DIR="$REPO_DIR/backend"
 FRONTEND_DIR="$REPO_DIR/frontend"
 USER_NAME="$(whoami)"
 
-PYTHON_VERSION="3.11"
+PYTHON_VERSION="3.12"
 
 echo "=== Installing system dependencies ==="
 sudo apt-get update
 sudo apt-get install -y git python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python3-pip pcscd pcsc-tools curl nginx
+sudo apt-get install -y libpcsclite-dev
+sudo apt-get install -y nodejs npm
 
 echo "=== Downloading nanostore project from GitHub if not present ==="
 if [ ! -d "$REPO_DIR" ]; then
@@ -69,6 +71,7 @@ if [ ! -f .env.local ] && [ -f .env.example ]; then
 fi
 
 # Build frontend for production
+pnpm install
 pnpm run build
 
 cd "$REPO_DIR"
