@@ -121,9 +121,35 @@ sudo systemctl daemon-reload
 sudo systemctl enable nanostore-backend
 sudo systemctl restart nanostore-backend
 
+echo "=== Creating systemd service file for card listener ==="
+
+CARD_LISTENER_SERVICE_FILE="/etc/systemd/system/nanostore-card-listener.service"
+sudo bash -c "cat > $CARD_LISTENER_SERVICE_FILE" <<EOL
+[Unit]
+Description=Nanostore Card Listener
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=$BACKEND_DIR
+ExecStart=$HOME/.local/bin/poetry run python card_listener.py
+Restart=always
+User=$USER_NAME
+Environment=PATH=$HOME/.local/bin:/usr/bin:/bin
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+echo "=== Enabling and starting card listener service ==="
+sudo systemctl daemon-reload
+sudo systemctl enable nanostore-card-listener
+sudo systemctl restart nanostore-card-listener
+
 echo "=== All services started! ==="
 echo "Backend: sudo systemctl status nanostore-backend"
 echo "Frontend: http://localhost:5000 (served by nginx from $FRONTEND_DIST)"
 echo "View backend logs: sudo journalctl -u nanostore-backend -f"
+echo "View card listener logs: sudo journalctl -u nanostore-card-listener -f"
 echo ""
 echo "=== IMPORTANT: Please reboot your system to apply kernel module changes! ==="
