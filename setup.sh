@@ -3,7 +3,8 @@
 set -e
 
 PROJECT_ROOT="$(pwd)"
-REPO_URL="https://github.com/savka-stepan/nanostore"
+RELEASE_URL="https://github.com/savka-stepan/nanostore/archive/refs/tags/v1.0.0.tar.gz"
+RELEASE_ARCHIVE="$PROJECT_ROOT/nanostore.tar.gz"
 REPO_DIR="$PROJECT_ROOT/nanostore"
 BACKEND_DIR="$REPO_DIR/backend"
 FRONTEND_DIR="$REPO_DIR/frontend"
@@ -17,11 +18,15 @@ sudo apt-get install -y git python${PYTHON_VERSION} python${PYTHON_VERSION}-venv
 sudo apt-get install -y libpcsclite-dev
 sudo apt-get install -y nodejs npm
 
-echo "=== Downloading nanostore project from GitHub if not present ==="
+echo "=== Downloading nanostore release archive ==="
 if [ ! -d "$REPO_DIR" ]; then
-    git clone "$REPO_URL" "$REPO_DIR"
+    wget -O "$RELEASE_ARCHIVE" "$RELEASE_URL"
+    tar -xzf "$RELEASE_ARCHIVE"
+    EXTRACTED_DIR=$(tar -tzf "$RELEASE_ARCHIVE" | head -1 | cut -f1 -d"/")
+    mv "$EXTRACTED_DIR" "$REPO_DIR"
+    rm "$RELEASE_ARCHIVE"
 else
-    echo "nanostore directory already exists, skipping clone."
+    echo "nanostore directory already exists, skipping download."
 fi
 
 echo "=== Configuring kernel module blacklist for NFC ==="
