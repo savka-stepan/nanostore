@@ -3,9 +3,33 @@
 set -e
 
 PROJECT_ROOT="$(pwd)"
-BACKEND_DIR="$PROJECT_ROOT/backend"
-FRONTEND_DIR="$PROJECT_ROOT/frontend"
+REPO_URL="https://github.com/savka-stepan/nanostore"
+REPO_DIR="$PROJECT_ROOT/nanostore"
+BACKEND_DIR="$REPO_DIR/backend"
+FRONTEND_DIR="$REPO_DIR/frontend"
 USER_NAME="$(whoami)"
+
+PYTHON_VERSION="3.11"
+
+echo "=== Installing system dependencies ==="
+sudo apt-get update
+sudo apt-get install -y git python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python3-pip pcscd pcsc-tools curl nginx
+
+echo "=== Downloading nanostore project from GitHub if not present ==="
+if [ ! -d "$REPO_DIR" ]; then
+    git clone "$REPO_URL" "$REPO_DIR"
+else
+    echo "nanostore directory already exists, skipping clone."
+fi
+
+echo "=== Configuring kernel module blacklist for NFC ==="
+BLACKLIST_FILE="/etc/modprobe.d/blacklist.conf"
+if ! grep -q "install nfc /bin/false" $BLACKLIST_FILE 2>/dev/null; then
+    echo "install nfc /bin/false" | sudo tee -a $BLACKLIST_FILE
+fi
+if ! grep -q "install pn533 /bin/false" $BLACKLIST_FILE 2>/dev/null; then
+    echo "install pn533 /bin/false" | sudo tee -a $BLACKLIST_FILE
+fi
 
 echo "=== Setting up Python backend ==="
 cd "$BACKEND_DIR"
@@ -26,7 +50,7 @@ if [ ! -f .env ] && [ -f .env.example ]; then
     echo "Copied backend/.env.example to backend/.env. Please edit it with your secrets."
 fi
 
-cd "$PROJECT_ROOT"
+cd "$REPO_DIR"
 
 echo "=== Setting up Vue frontend ==="
 cd "$FRONTEND_DIR"
@@ -47,15 +71,9 @@ fi
 # Build frontend for production
 pnpm run build
 
-cd "$PROJECT_ROOT"
+cd "$REPO_DIR"
 
-echo "=== Installing and configuring nginx ==="
-if ! command -v nginx &> /dev/null; then
-    sudo apt-get update
-    sudo apt-get install -y nginx
-fi
-
-# Configure nginx to serve frontend/dist
+echo "=== Configuring nginx ==="
 NGINX_CONF="/etc/nginx/sites-available/nanostore"
 FRONTEND_DIST="$FRONTEND_DIR/dist"
 
@@ -107,3 +125,5 @@ echo "=== All services started! ==="
 echo "Backend: sudo systemctl status nanostore-backend"
 echo "Frontend: http://localhost:5000 (served by nginx from $FRONTEND_DIST)"
 echo "View backend logs: sudo journalctl -u nanostore-backend -f"
+echo ""
+echo "=== IMPORTANT: Please reboot your system to apply kernel module changes! ==="
