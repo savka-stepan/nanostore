@@ -14,7 +14,7 @@ PYTHON_VERSION="3.12"
 
 echo "=== Installing system dependencies ==="
 sudo apt-get update
-sudo apt-get install -y git python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python3-pip pcscd pcsc-tools curl nginx
+sudo apt-get install -y git python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python3-pip python3-poetry pcscd pcsc-tools curl nginx
 sudo apt-get install -y libpcsclite-dev
 sudo apt-get install -y nodejs npm
 
@@ -64,9 +64,8 @@ cd "$FRONTEND_DIR"
 
 # Install pnpm if not present
 if ! command -v pnpm &> /dev/null; then
-    echo "pnpm not found. Installing pnpm..."
-    npm install --global pnpm --prefix ~/.local
-    export PATH="$HOME/.local/bin:$PATH"
+    echo "pnpm not found. Installing pnpm globally..."
+    sudo npm install -g pnpm
 fi
 
 # Copy .env.example to .env.local if .env.local does not exist
@@ -84,6 +83,16 @@ cd "$REPO_DIR"
 echo "=== Configuring nginx ==="
 NGINX_CONF="/etc/nginx/sites-available/nanostore"
 FRONTEND_DIST="$FRONTEND_DIR/dist"
+
+# Ensure nginx can access the frontend dist directory and all parent directories
+echo "=== Setting permissions for nginx to access frontend files ==="
+sudo chmod o+x /home
+sudo chmod o+x /home/$USER_NAME
+sudo chmod o+x /home/$USER_NAME/Documents
+sudo chmod o+x /home/$USER_NAME/Documents/nanostore
+sudo chmod o+x /home/$USER_NAME/Documents/nanostore/frontend
+sudo chmod o+x /home/$USER_NAME/Documents/nanostore/frontend/dist
+sudo chmod -R o+r /home/$USER_NAME/Documents/nanostore/frontend/dist
 
 sudo bash -c "cat > $NGINX_CONF" <<EOL
 server {
@@ -115,10 +124,11 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=$BACKEND_DIR
-ExecStart=$HOME/.local/bin/poetry run python server.py
+ExecStart=/usr/bin/poetry run python server.py
 Restart=always
 User=$USER_NAME
-Environment=PATH=$HOME/.local/bin:/usr/bin:/bin
+Environment=PATH=/usr/bin:/bin
+Environment=HOME=/home/$USER_NAME
 
 [Install]
 WantedBy=multi-user.target
@@ -140,10 +150,11 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=$BACKEND_DIR
-ExecStart=$HOME/.local/bin/poetry run python card_listener.py
+ExecStart=/usr/bin/poetry run python card_listener.py
 Restart=always
 User=$USER_NAME
-Environment=PATH=$HOME/.local/bin:/usr/bin:/bin
+Environment=PATH=/usr/bin:/bin
+Environment=HOME=/home/$USER_NAME
 
 [Install]
 WantedBy=multi-user.target
