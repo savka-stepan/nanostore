@@ -14,9 +14,47 @@ PYTHON_VERSION="3.12"
 
 echo "=== Installing system dependencies ==="
 sudo apt-get update
-sudo apt-get install -y git python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python3-pip python3-poetry pcscd pcsc-tools curl nginx
-sudo apt-get install -y libpcsclite-dev
+sudo apt-get install -y git python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python3-pip python3-poetry pcscd pcsc-tools libpcsclite1 libccid curl nginx
 sudo apt-get install -y nodejs npm
+
+# Ensure user is in plugdev group for device access
+sudo usermod -aG plugdev $USER_NAME
+
+echo "=== Configuring kernel module blacklist for NFC ==="
+BLACKLIST_FILE="/etc/modprobe.d/blacklist.conf"
+if ! grep -q "install nfc /bin/false" $BLACKLIST_FILE 2>/dev/null; then
+    echo "install nfc /bin/false" | sudo tee -a $BLACKLIST_FILE
+fi
+if ! grep -q "install pn533 /bin/false" $BLACKLIST_FILE 2>/dev/null; then
+    echo "install pn533 /bin/false" | sudo tee -a $BLACKLIST_FILE
+fi
+
+
+# Enable and start pcscd for NFC reader support
+sudo systemctl enable pcscd
+sudo systemctl start pcscd
+
+# Ensure correct permissions for ACR122U NFC reader
+sudo tee /etc/udev/rules.d/99-acr122u.rules > /dev/null <<EOF
+SUBSYSTEM=="usb", ATTRS{idVendor}=="072f", ATTRS{idProduct}=="2200", GROUP="plugdev", MODE="0660"
+EOF
+sudo tee /etc/udev/rules.d/99-usblrb.rules > /dev/null <<EOF
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="5512", GROUP="plugdev", MODE="0660"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", GROUP="plugdev", MODE="0660"
+EOF
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+
+# Ensure plugdev users can access pcscd (for Ubuntu 20.04+)
+sudo mkdir -p /etc/polkit-1/rules.d/
+sudo tee /etc/polkit-1/rules.d/49-pcscd.rules > /dev/null <<EOF
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.debian.pcsc-lite.access_pcsc" && subject.isInGroup("plugdev")) {
+        return polkit.Result.YES;
+    }
+});
+EOF
+sudo systemctl restart pcscd
 
 echo "=== Downloading nanostore release archive ==="
 if [ ! -d "$REPO_DIR" ]; then
@@ -29,15 +67,6 @@ else
     echo "nanostore directory already exists, skipping download."
 fi
 
-echo "=== Configuring kernel module blacklist for NFC ==="
-BLACKLIST_FILE="/etc/modprobe.d/blacklist.conf"
-if ! grep -q "install nfc /bin/false" $BLACKLIST_FILE 2>/dev/null; then
-    echo "install nfc /bin/false" | sudo tee -a $BLACKLIST_FILE
-fi
-if ! grep -q "install pn533 /bin/false" $BLACKLIST_FILE 2>/dev/null; then
-    echo "install pn533 /bin/false" | sudo tee -a $BLACKLIST_FILE
-fi
-
 echo "=== Setting up Python backend ==="
 cd "$BACKEND_DIR"
 
@@ -45,7 +74,6 @@ cd "$BACKEND_DIR"
 if ! command -v poetry &> /dev/null; then
     echo "Poetry not found. Installing Poetry..."
     curl -sSL https://install.python-poetry.org | python3 -
-    export PATH="$HOME/.local/bin:$PATH"
 fi
 
 # Install backend dependencies
