@@ -1,6 +1,7 @@
 import asyncio
 import websockets
 import time
+from smartcard.System import readers
 
 from card import get_card_uid
 
@@ -17,9 +18,13 @@ async def send_card_uid(card_uid):
 
 def main():
     print("Starting card listener for opening door...")
+    all_readers = readers()
+    if not all_readers:
+        print("No readers found!")
+        return
+
+    device = str(all_readers[0])
     while True:
-        # TODO: For production, get device from database or config
-        device = "ACS ACR122U 00 00"
         card_uid = get_card_uid(device)
         if card_uid:
             try:

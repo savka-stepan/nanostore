@@ -4,6 +4,7 @@ import websockets
 import json
 import uuid
 import re
+from smartcard.System import readers
 
 from db import get_setting_from_db
 from card import get_card_uid_async
@@ -59,13 +60,15 @@ async def handle_websocket(websocket):
                 # timeout = get_setting_from_db("timeout", 8000)
                 timeout = 8000
                 trigger_relay(timeout)
-                print(f"Door opened for session {session_id}")
                 await websocket.send(json.dumps({"type": "open_door", "status": "Ok"}))
 
             # Login (card scan listener) POS
             elif msg and msg.get("type") == "login":
-                # TODO: For production, get device from database or config
-                device = "ACS ACR122U 01 00"
+                all_readers = readers()
+                if len(all_readers) > 1:
+                    device = str(all_readers[1])
+                else:
+                    device = str(all_readers[0])
                 card_uid = await get_card_uid_async(device)
                 await websocket.send(
                     json.dumps({"type": "customer_code", "code": card_uid})
