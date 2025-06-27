@@ -29,7 +29,6 @@ if ! grep -q "install pn533 /bin/false" $BLACKLIST_FILE 2>/dev/null; then
     echo "install pn533 /bin/false" | sudo tee -a $BLACKLIST_FILE
 fi
 
-
 # Enable and start pcscd for NFC reader support
 sudo systemctl enable pcscd
 sudo systemctl start pcscd
@@ -45,15 +44,19 @@ EOF
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 
+# Unload spi_ch341 kernel module to avoid USB relay conflicts
+sudo rmmod spi_ch341 || true
+
 # Ensure plugdev users can access pcscd (for Ubuntu 20.04+)
 sudo mkdir -p /etc/polkit-1/rules.d/
 sudo tee /etc/polkit-1/rules.d/49-pcscd.rules > /dev/null <<EOF
 polkit.addRule(function(action, subject) {
-    if (action.id == "org.debian.pcsc-lite.access_pcsc" && subject.isInGroup("plugdev")) {
+    if ((action.id == "org.debian.pcsc-lite.access_pcsc" || action.id == "org.debian.pcsc-lite.access_card") && subject.isInGroup("plugdev")) {
         return polkit.Result.YES;
     }
 });
 EOF
+sudo systemctl restart polkit
 sudo systemctl restart pcscd
 
 echo "=== Downloading nanostore release archive ==="
@@ -147,7 +150,8 @@ BACKEND_SERVICE_FILE="/etc/systemd/system/nanostore-backend.service"
 sudo bash -c "cat > $BACKEND_SERVICE_FILE" <<EOL
 [Unit]
 Description=Nanostore Backend WebSocket Server
-After=network.target
+After=network.target pcscd.service
+Requires=pcscd.service
 
 [Service]
 Type=simple
@@ -173,7 +177,8 @@ CARD_LISTENER_SERVICE_FILE="/etc/systemd/system/nanostore-card-listener.service"
 sudo bash -c "cat > $CARD_LISTENER_SERVICE_FILE" <<EOL
 [Unit]
 Description=Nanostore Card Listener
-After=network.target
+After=network.target pcscd.service
+Requires=pcscd.service
 
 [Service]
 Type=simple
