@@ -19,6 +19,7 @@ sudo apt-get install -y nodejs npm
 
 # Ensure user is in plugdev group for device access
 sudo usermod -aG plugdev $USER_NAME
+sudo usermod -aG dialout $USER_NAME
 
 echo "=== Configuring kernel module blacklist for NFC ==="
 BLACKLIST_FILE="/etc/modprobe.d/blacklist.conf"
