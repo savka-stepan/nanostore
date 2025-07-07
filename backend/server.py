@@ -4,6 +4,8 @@ import websockets
 import json
 import uuid
 import re
+import time
+
 from smartcard.System import readers
 
 from api import get_nanostore_settings
@@ -30,6 +32,7 @@ WEBSOCKET_PORT = 8765
 # This will not persist across server restarts and is not thread-safe.
 # In a production environment, consider using a more robust session management solution.
 SESSION_CUSTOMERS = {}
+SESSION_LAST_ACTIVITY = {}
 
 OFN_API_KEY = get_nanostore_settings(key="OFN_API_KEY")
 OFN_ADMIN_EMAIL = get_nanostore_settings(key="OFN_ADMIN_EMAIL")
@@ -37,6 +40,11 @@ OFN_ADMIN_PASSWORD = get_nanostore_settings(key="OFN_ADMIN_PASSWORD")
 OFN_SHOP_ID = get_nanostore_settings(key="OFN_SHOP_ID")
 ORDER_CYCLE_ID = get_nanostore_settings(key="ORDER_CYCLE_ID")
 OFN_PAYMENT_METHOD_ID = get_nanostore_settings(key="OFN_PAYMENT_METHOD_ID")
+TIMEOUT_SHOPPING_CART = int(get_nanostore_settings(key="TIMEOUT_SHOPPING_CART"))
+
+
+def update_last_activity(session_id):
+    SESSION_LAST_ACTIVITY[session_id] = time.time()
 
 
 async def handle_websocket(websocket):
@@ -164,6 +172,7 @@ async def handle_websocket(websocket):
                     await websocket.send(json.dumps(response))
 
             elif msg.get("type") == "add_to_cart":
+                update_last_activity(session_id)
                 add_product_to_cart(
                     session_id,
                     {
@@ -179,11 +188,13 @@ async def handle_websocket(websocket):
                 await websocket.send(json.dumps({"type": "cart", "cart": cart}))
 
             elif msg.get("type") == "update_quantity":
+                update_last_activity(session_id)
                 update_cart_quantity(session_id, msg["id"], msg["quantity"])
                 cart = get_cart_for_session(session_id)
                 await websocket.send(json.dumps({"type": "cart", "cart": cart}))
 
             elif msg.get("type") == "remove_item":
+                update_last_activity(session_id)
                 remove_cart_item(session_id, msg["id"])
                 cart = get_cart_for_session(session_id)
                 await websocket.send(json.dumps({"type": "cart", "cart": cart}))
@@ -255,10 +266,40 @@ async def handle_websocket(websocket):
         print(f"Error in handle_websocket: {e}")
 
 
+async def cart_timeout_watcher():
+    while True:
+        now = time.time()
+        to_remove = []
+        for session_id, last_activity in SESSION_LAST_ACTIVITY.items():
+            if now - last_activity > TIMEOUT_SHOPPING_CART:
+                customer_data = SESSION_CUSTOMERS.get(session_id, {})
+                # Create order but do not bill
+                order = create_ofn_order_from_session(
+                    session_id,
+                    OFN_API_KEY,
+                    OFN_ADMIN_EMAIL,
+                    OFN_ADMIN_PASSWORD,
+                    OFN_SHOP_ID,
+                    ORDER_CYCLE_ID,
+                    OFN_PAYMENT_METHOD_ID,
+                    customer_data,
+                )
+                print(f"Session {session_id} timed out. Order created: {order}")
+                to_remove.append(session_id)
+        # Clean up timed-out sessions
+        for session_id in to_remove:
+            SESSION_LAST_ACTIVITY.pop(session_id, None)
+            SESSION_CUSTOMERS.pop(session_id, None)
+        await asyncio.sleep(10)  # Check every 10 seconds
+
+
 async def main():
     print(f"Starting WebSocket server on ws://localhost:{WEBSOCKET_PORT}")
-    async with websockets.serve(handle_websocket, "localhost", WEBSOCKET_PORT):
-        await asyncio.Future()  # run forever
+    server = websockets.serve(handle_websocket, "localhost", WEBSOCKET_PORT)
+    await asyncio.gather(
+        server,
+        cart_timeout_watcher(),
+    )
     print("WebSocket server stopped.")
 
 
