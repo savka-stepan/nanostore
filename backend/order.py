@@ -6,13 +6,14 @@ import os
 from dotenv import load_dotenv
 
 from cart import get_cart_for_session
+from api import IQToolAPI, get_nanostore_settings
 
 
 load_dotenv()
 
+OFN_API_KEY = os.environ.get("OFN_API_KEY")
 OFN_ADMIN_EMAIL = os.environ.get("OFN_ADMIN_EMAIL")
 OFN_ADMIN_PASSWORD = os.environ.get("OFN_ADMIN_PASSWORD")
-OFN_ADMIN_API_KEY = os.environ.get("OFN_ADMIN_API_KEY")
 
 INSTANCE_URL = "https://openfoodnetwork.de"
 PRE_LOGIN_URL = f"{INSTANCE_URL}/#/login"
@@ -92,10 +93,9 @@ def create_order(
 
 def get_order_data(order_id: str):
     """Fetch order details via OFN API."""
-    url = f"{API_ORDER_URL}/{order_id}?token={OFN_ADMIN_API_KEY}"
-    headers = {
-        "Accept": "application/json",
-    }
+    ofn_api_key = get_nanostore_settings(key="OFN_API_KEY")
+    url = f"{API_ORDER_URL}/{order_id}?token={ofn_api_key}"
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
     response = httpx.get(url, headers=headers)
     print("Status code:", response.status_code)
     print("Response JSON:", response.json())
@@ -213,7 +213,7 @@ def update_customer(
 
 def add_line_items(http_client: httpx.Client, order_id: str, cart: list):
     """Add line items to the order."""
-    url = f"{INSTANCE_URL}/api/v0/orders/{order_id}/shipments.json?token={OFN_ADMIN_API_KEY}"
+    url = f"{INSTANCE_URL}/api/v0/orders/{order_id}/shipments.json?token={OFN_API_KEY}"
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -249,14 +249,8 @@ def mark_payment(
 def generate_invoice(order_id: str):
     """Generate an invoice for the order from IQ tool."""
     payload = {"order_no": order_id}
-    httpx.post(
-        "https://ofn.hof-homann.de/api/generate-invoice-pdf-webhook/",
-        json=payload,
-        headers={
-            "Authorization": "JWT {IQTOOL_JWT_TOKEN}",
-            "Content-Type": "application/json",
-        },
-    )
+    api_service = IQToolAPI()  # Assuming IQToolAPI is defined in api.py
+    api_service.post("/generate-invoice-pdf-webhook/", payload=payload)
 
 
 def create_ofn_order_from_session(
