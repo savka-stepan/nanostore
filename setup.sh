@@ -21,7 +21,7 @@ sudo apt-get install -y nodejs npm
 sudo usermod -aG plugdev $USER_NAME
 sudo usermod -aG dialout $USER_NAME
 
-echo "=== Configuring kernel module blacklist for NFC ==="
+echo "=== Configuring kernel module blacklist for NFC and USB relay ==="
 BLACKLIST_FILE="/etc/modprobe.d/blacklist.conf"
 if ! grep -q "install nfc /bin/false" $BLACKLIST_FILE 2>/dev/null; then
     echo "install nfc /bin/false" | sudo tee -a $BLACKLIST_FILE
@@ -29,6 +29,12 @@ fi
 if ! grep -q "install pn533 /bin/false" $BLACKLIST_FILE 2>/dev/null; then
     echo "install pn533 /bin/false" | sudo tee -a $BLACKLIST_FILE
 fi
+if ! grep -q "^blacklist spi_ch341" $BLACKLIST_FILE 2>/dev/null; then
+    echo "blacklist spi_ch341" | sudo tee -a $BLACKLIST_FILE
+fi
+
+# Update initramfs to apply blacklist changes
+sudo update-initramfs -u
 
 # Enable and start pcscd for NFC reader support
 sudo systemctl enable pcscd
