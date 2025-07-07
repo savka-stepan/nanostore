@@ -89,6 +89,37 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+async function authToIQTool() {
+  const email = import.meta.env.VITE_IQT_API_EMAIL
+  const password = import.meta.env.VITE_IQT_API_PASSWORD
+
+  try {
+    const response = await fetch('https://ofn.hof-homann.de/api/token-obtain/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+    const data = await response.json()
+    if (data.access) {
+      localStorage.setItem('jwtToken', data.access)
+      webSocketMessage.value = 'Erfolgreich am IQ Tool angemeldet!'
+      webSocketSnackbarColor.value = 'success'
+      webSocketSnackbar.value = true
+      return true
+    } else {
+      webSocketMessage.value = data.detail || 'Login fehlgeschlagen'
+      webSocketSnackbarColor.value = 'error'
+      webSocketSnackbar.value = true
+      return false
+    }
+  } catch (error) {
+    webSocketMessage.value = 'Login Fehler: ' + error.message
+    webSocketSnackbarColor.value = 'error'
+    webSocketSnackbar.value = true
+    return false
+  }
+}
+
 const { connectWS, sendWS, closeWS } = createWebSocket(
   'ws://localhost:8765/',
   handleWSMessage,
@@ -96,7 +127,8 @@ const { connectWS, sendWS, closeWS } = createWebSocket(
   handleWSClose
 )
 
-onMounted(() => {
+onMounted(async () => {
+  await authToIQTool()
   connectWS()
 })
 

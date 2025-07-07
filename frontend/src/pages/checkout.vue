@@ -192,10 +192,15 @@ async function pay() {
   paying.value = true
   error.value = ''
   try {
+    // Get JWT token from localStorage
+    const jwtToken = localStorage.getItem('jwtToken')
     // Get clientSecret from backend
     const response = await fetch('https://ofn.hof-homann.de/api/create-payment-intent/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'JWT ' + jwtToken
+      },
       body: JSON.stringify({ order_id: order.value.order_id, total: order.value.total })
     })
     const data = await response.json()
