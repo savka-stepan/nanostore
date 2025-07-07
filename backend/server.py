@@ -4,9 +4,9 @@ import websockets
 import json
 import uuid
 import re
-import os
 from smartcard.System import readers
 
+from api import get_nanostore_settings
 from card import get_card_uid_async
 from cart import (
     get_cart_for_session,
@@ -21,11 +21,6 @@ from scale import get_scale_port
 from relay import trigger_relay
 from order import create_ofn_order_from_session
 
-
-OFN_SHOP_ID = os.environ.get("OFN_SHOP_ID")
-ORDER_CYCLE_ID = os.environ.get("ORDER_CYCLE_ID")
-OFN_PAYMENT_METHOD_ID = os.environ.get("OFN_PAYMENT_METHOD_ID")
-
 BAUDRATE = 9600
 WEBSOCKET_PORT = 8765
 
@@ -35,6 +30,13 @@ WEBSOCKET_PORT = 8765
 # This will not persist across server restarts and is not thread-safe.
 # In a production environment, consider using a more robust session management solution.
 SESSION_CUSTOMERS = {}
+
+OFN_API_KEY = get_nanostore_settings(key="OFN_API_KEY")
+OFN_ADMIN_EMAIL = get_nanostore_settings(key="OFN_ADMIN_EMAIL")
+OFN_ADMIN_PASSWORD = get_nanostore_settings(key="OFN_ADMIN_PASSWORD")
+OFN_SHOP_ID = get_nanostore_settings(key="OFN_SHOP_ID")
+ORDER_CYCLE_ID = get_nanostore_settings(key="ORDER_CYCLE_ID")
+OFN_PAYMENT_METHOD_ID = get_nanostore_settings(key="OFN_PAYMENT_METHOD_ID")
 
 
 async def handle_websocket(websocket):
@@ -82,7 +84,7 @@ async def handle_websocket(websocket):
             # Check code, log in the shopping cart
             elif msg.get("type") == "check_customer_code":
                 code = msg.get("code")
-                customers = fetch_customers()
+                customers = fetch_customers(OFN_API_KEY)
                 customer_data = find_customer_by_code(code, customers)
                 # Save customer data for this session
                 SESSION_CUSTOMERS[session_id] = customer_data
@@ -97,7 +99,7 @@ async def handle_websocket(websocket):
 
             # Products load
             elif msg.get("type") == "load_products":
-                products_data = load_products()
+                products_data = load_products(OFN_API_KEY, OFN_SHOP_ID)
                 await websocket.send(
                     json.dumps({"type": "load_products", **products_data})
                 )
@@ -109,7 +111,7 @@ async def handle_websocket(websocket):
                     .replace("Meta", "")
                     .lower()
                 )
-                products_data = load_products()
+                products_data = load_products(OFN_API_KEY, OFN_SHOP_ID)
                 product_array = products_data.get("product_array", {})
                 found = None
                 for key, p in product_array.items():
@@ -220,10 +222,13 @@ async def handle_websocket(websocket):
                 # Create order from session
                 order = create_ofn_order_from_session(
                     session_id,
-                    customer_data,
+                    OFN_API_KEY,
+                    OFN_ADMIN_EMAIL,
+                    OFN_ADMIN_PASSWORD,
                     OFN_SHOP_ID,
                     ORDER_CYCLE_ID,
                     OFN_PAYMENT_METHOD_ID,
+                    customer_data,
                 )
 
                 await websocket.send(

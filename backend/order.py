@@ -1,19 +1,10 @@
 import httpx
 from bs4 import BeautifulSoup
 import re
-import os
 
-from dotenv import load_dotenv
-
+from api import IQToolAPI
 from cart import get_cart_for_session
-from api import IQToolAPI, get_nanostore_settings
 
-
-load_dotenv()
-
-OFN_API_KEY = os.environ.get("OFN_API_KEY")
-OFN_ADMIN_EMAIL = os.environ.get("OFN_ADMIN_EMAIL")
-OFN_ADMIN_PASSWORD = os.environ.get("OFN_ADMIN_PASSWORD")
 
 INSTANCE_URL = "https://openfoodnetwork.de"
 PRE_LOGIN_URL = f"{INSTANCE_URL}/#/login"
@@ -38,7 +29,9 @@ def fetch_authenticity_token(http_client: httpx.Client) -> str:
             raise Exception("CSRF token not found on the page.")
 
 
-def get_session_tokens(http_client: httpx.Client) -> dict:
+def get_session_tokens(
+    http_client: httpx.Client, ofn_admin_email: str, ofn_admin_password: str
+) -> dict:
     """Login and return session cookies (_ofn_session_id, XSRF-TOKEN)."""
     # 1. GET the new order page to get the CSRF token
     authenticity_token = fetch_authenticity_token(http_client)
@@ -46,8 +39,8 @@ def get_session_tokens(http_client: httpx.Client) -> dict:
     # 2. POST login credentials
     payload = {
         "authenticity_token": authenticity_token,
-        "spree_user[email]": OFN_ADMIN_EMAIL,
-        "spree_user[password]": OFN_ADMIN_PASSWORD,
+        "spree_user[email]": ofn_admin_email,
+        "spree_user[password]": ofn_admin_password,
     }
     http_client.post(LOGIN_URL, data=payload, headers={"Referer": LOGIN_URL})
 
@@ -91,9 +84,8 @@ def create_order(
         raise Exception("Order number not found in response.")
 
 
-def get_order_data(order_id: str):
+def get_order_data(ofn_api_key: str, order_id: str):
     """Fetch order details via OFN API."""
-    ofn_api_key = get_nanostore_settings(key="OFN_API_KEY")
     url = f"{API_ORDER_URL}/{order_id}?token={ofn_api_key}"
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     response = httpx.get(url, headers=headers)
@@ -211,9 +203,11 @@ def update_customer(
         resp = http_client.put(url, data=payload)
 
 
-def add_line_items(http_client: httpx.Client, order_id: str, cart: list):
+def add_line_items(
+    http_client: httpx.Client, ofn_api_key: str, order_id: str, cart: list
+):
     """Add line items to the order."""
-    url = f"{INSTANCE_URL}/api/v0/orders/{order_id}/shipments.json?token={OFN_API_KEY}"
+    url = f"{INSTANCE_URL}/api/v0/orders/{order_id}/shipments.json?token={ofn_api_key}"
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -249,16 +243,19 @@ def mark_payment(
 def generate_invoice(order_id: str):
     """Generate an invoice for the order from IQ tool."""
     payload = {"order_no": order_id}
-    api_service = IQToolAPI()  # Assuming IQToolAPI is defined in api.py
+    api_service = IQToolAPI()
     api_service.post("/generate-invoice-pdf-webhook/", payload=payload)
 
 
 def create_ofn_order_from_session(
     session_id: str,
-    customer_data: dict,
+    ofn_api_key: str,
+    ofn_admin_email: str,
+    ofn_admin_password: str,
     distributor_id: str,
     order_cycle_id: str,
     payment_method_id: str,
+    customer_data: dict,
 ) -> dict:
     # 1. Get the cart for this session
     cart = get_cart_for_session(session_id)
@@ -267,7 +264,9 @@ def create_ofn_order_from_session(
 
     with httpx.Client(follow_redirects=True) as http_client:
         # 2. Get session tokens (login)
-        session_tokens = get_session_tokens(http_client)
+        session_tokens = get_session_tokens(
+            http_client, ofn_admin_email, ofn_admin_password
+        )
 
         # 3. Create the order
         order_id = create_order(http_client, distributor_id, order_cycle_id)
@@ -276,7 +275,7 @@ def create_ofn_order_from_session(
         update_customer(session_tokens, order_id, customer_data)
 
         # 5. Add line items
-        add_line_items(http_client, order_id, cart)
+        add_line_items(http_client, ofn_api_key, order_id, cart)
 
         # 6. Create payment
         total = sum(item["price"] * item.get("quantity", 1) for item in cart)

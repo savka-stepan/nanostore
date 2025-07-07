@@ -1,6 +1,10 @@
 import os
 import httpx
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 OFN_API_BASE_URL = "https://ofn.hof-homann.de/api/"
 IQT_API_EMAIL = os.environ.get("IQT_API_EMAIL")
 IQT_API_PASSWORD = os.environ.get("IQT_API_PASSWORD")

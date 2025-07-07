@@ -1,25 +1,18 @@
-import os
 import httpx
 
-from dotenv import load_dotenv
 
-load_dotenv()
-
-
-OFN_API_KEY = os.environ.get("OFN_API_KEY")
-OFN_SHOP_ID = os.environ.get("OFN_SHOP_ID")
 INSTANCE_URL = "https://openfoodnetwork.de"
 
 
-def load_products() -> dict:
+def load_products(ofn_api_key: str, ofn_shop_id: str) -> dict:
     """Load products from Open Food Network API."""
     headers = {
         "Accept": "application/json;charset=UTF-8",
         "Content-Type": "application/json",
-        "X-Spree-Token": OFN_API_KEY,
+        "X-Spree-Token": ofn_api_key,
     }
     products_url = (
-        f"{INSTANCE_URL}/api/v0/products/bulk_products?q[supplier_id_in]={OFN_SHOP_ID}"
+        f"{INSTANCE_URL}/api/v0/products/bulk_products?q[supplier_id_in]={ofn_shop_id}"
     )
     tax_url = f"{INSTANCE_URL}/api/v0/taxons"
     try:
