@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-OFN_ADMIN_API_KEY = os.environ.get("OFN_ADMIN_API_KEY")
+OFN_API_KEY = os.environ.get("OFN_API_KEY")
 INSTANCE_URL = "https://openfoodnetwork.de"
 
 
@@ -17,7 +17,7 @@ def fetch_customers() -> list[dict]:
         "Accept": "application/json;charset=UTF-8",
         "Content-Type": "application/json",
     }
-    url = f"{INSTANCE_URL}/api/v1/customers?token={OFN_ADMIN_API_KEY}"
+    url = f"{INSTANCE_URL}/api/v1/customers?token={OFN_API_KEY}"
     try:
         with httpx.Client() as client:
             response = client.get(url, headers=headers)

@@ -4,9 +4,9 @@ import websockets
 import json
 import uuid
 import re
+import os
 from smartcard.System import readers
 
-from db import get_setting_from_db
 from card import get_card_uid_async
 from cart import (
     get_cart_for_session,
@@ -20,6 +20,11 @@ from product import load_products
 from scale import get_scale_port
 from relay import trigger_relay
 from order import create_ofn_order_from_session
+
+
+OFN_SHOP_ID = os.environ.get("OFN_SHOP_ID")
+ORDER_CYCLE_ID = os.environ.get("ORDER_CYCLE_ID")
+OFN_PAYMENT_METHOD_ID = os.environ.get("OFN_PAYMENT_METHOD_ID")
 
 BAUDRATE = 9600
 WEBSOCKET_PORT = 8765
@@ -211,19 +216,14 @@ async def handle_websocket(websocket):
             # Checkout logic
             elif msg.get("type") == "checkout":
                 customer_data = SESSION_CUSTOMERS.get(session_id, {})
-                distributor_id = 256  # Example distributor ID, replace with actual
-                order_cycle_id = 1153  # Example order cycle ID, replace with actual
-                payment_method_id = (
-                    124  # Example payment method ID, replace with actual
-                )
 
                 # Create order from session
                 order = create_ofn_order_from_session(
                     session_id,
                     customer_data,
-                    distributor_id,
-                    order_cycle_id,
-                    payment_method_id,
+                    OFN_SHOP_ID,
+                    ORDER_CYCLE_ID,
+                    OFN_PAYMENT_METHOD_ID,
                 )
 
                 await websocket.send(

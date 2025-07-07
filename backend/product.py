@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-OFN_ADMIN_API_KEY = os.environ.get("OFN_ADMIN_API_KEY")
+OFN_API_KEY = os.environ.get("OFN_API_KEY")
+OFN_SHOP_ID = os.environ.get("OFN_SHOP_ID")
 INSTANCE_URL = "https://openfoodnetwork.de"
 
 
@@ -15,11 +16,11 @@ def load_products() -> dict:
     headers = {
         "Accept": "application/json;charset=UTF-8",
         "Content-Type": "application/json",
-        "X-Spree-Token": OFN_ADMIN_API_KEY,
+        "X-Spree-Token": OFN_API_KEY,
     }
-    # TODO: Replace with actual distributor ID
-    distributor_id = "256"  # Example distributor ID, adjust as needed
-    products_url = f"{INSTANCE_URL}/api/v0/products/bulk_products?q[supplier_id_in]={distributor_id}"
+    products_url = (
+        f"{INSTANCE_URL}/api/v0/products/bulk_products?q[supplier_id_in]={OFN_SHOP_ID}"
+    )
     tax_url = f"{INSTANCE_URL}/api/v0/taxons"
     try:
         with httpx.Client() as client:
