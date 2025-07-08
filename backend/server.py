@@ -306,21 +306,31 @@ async def cart_timeout_watcher():
     while True:
         now = time.time()
         to_remove = []
-        for session_id, last_activity in SESSION_LAST_ACTIVITY.items():
+        for session_id, last_activity in list(SESSION_LAST_ACTIVITY.items()):
             if now - last_activity > timeout:
+                cart = get_cart_for_session(session_id)
+                if not cart:
+                    # Cart is empty, just clean up the session
+                    print(
+                        f"Session {session_id} timed out, but cart is empty. Cleaning up session."
+                    )
+                    to_remove.append(session_id)
+                    continue
                 customer_data = SESSION_CUSTOMERS.get(session_id, {})
-                # Create order but do not bill
-                order = create_ofn_order_from_session(
-                    session_id,
-                    OFN_API_KEY,
-                    OFN_ADMIN_EMAIL,
-                    OFN_ADMIN_PASSWORD,
-                    OFN_SHOP_ID,
-                    ORDER_CYCLE_ID,
-                    OFN_PAYMENT_METHOD_ID,
-                    customer_data,
-                )
-                print(f"Session {session_id} timed out. Order created: {order}")
+                try:
+                    order = create_ofn_order_from_session(
+                        session_id,
+                        OFN_API_KEY,
+                        OFN_ADMIN_EMAIL,
+                        OFN_ADMIN_PASSWORD,
+                        OFN_SHOP_ID,
+                        ORDER_CYCLE_ID,
+                        OFN_PAYMENT_METHOD_ID,
+                        customer_data,
+                    )
+                    print(f"Session {session_id} timed out. Order created: {order}")
+                except Exception as e:
+                    print(f"Error creating order for session {session_id}: {e}")
                 to_remove.append(session_id)
         # Clean up timed-out sessions
         for session_id in to_remove:
