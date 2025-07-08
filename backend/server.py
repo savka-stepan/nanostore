@@ -41,7 +41,8 @@ OFN_ADMIN_PASSWORD = get_nanostore_settings(key="OFN_ADMIN_PASSWORD")
 OFN_SHOP_ID = get_nanostore_settings(key="OFN_SHOP_ID")
 ORDER_CYCLE_ID = get_nanostore_settings(key="ORDER_CYCLE_ID")
 OFN_PAYMENT_METHOD_ID = get_nanostore_settings(key="OFN_PAYMENT_METHOD_ID")
-TIMEOUT_SHOPPING_CART = int(get_nanostore_settings(key="TIMEOUT_SHOPPING_CART"))
+TIMEOUT_RELAY = get_nanostore_settings(key="TIMEOUT_RELAY")
+TIMEOUT_SHOPPING_CART = get_nanostore_settings(key="TIMEOUT_SHOPPING_CART")
 
 api_service = IQToolAPI()
 
@@ -74,7 +75,7 @@ async def handle_websocket(websocket):
 
             # Open door (card scan listener) Entrance
             if msg.get("type") == "open_door":
-                timeout = 8000
+                timeout = int(TIMEOUT_RELAY)
                 trigger_relay(timeout)
                 await websocket.send(json.dumps({"type": "open_door", "status": "OK"}))
 
@@ -301,11 +302,12 @@ async def handle_websocket(websocket):
 
 
 async def cart_timeout_watcher():
+    timeout = int(TIMEOUT_SHOPPING_CART)
     while True:
         now = time.time()
         to_remove = []
         for session_id, last_activity in SESSION_LAST_ACTIVITY.items():
-            if now - last_activity > TIMEOUT_SHOPPING_CART:
+            if now - last_activity > timeout:
                 customer_data = SESSION_CUSTOMERS.get(session_id, {})
                 # Create order but do not bill
                 order = create_ofn_order_from_session(
