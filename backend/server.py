@@ -8,7 +8,7 @@ import time
 
 from smartcard.System import readers
 
-from api import get_nanostore_settings
+from api import get_nanostore_settings, IQToolAPI
 from card import get_card_uid_async
 from cart import (
     get_cart_for_session,
@@ -22,6 +22,7 @@ from product import load_products
 from scale import get_scale_port
 from relay import trigger_relay
 from order import create_ofn_order_from_session
+
 
 BAUDRATE = 9600
 WEBSOCKET_PORT = 8765
@@ -41,6 +42,8 @@ OFN_SHOP_ID = get_nanostore_settings(key="OFN_SHOP_ID")
 ORDER_CYCLE_ID = get_nanostore_settings(key="ORDER_CYCLE_ID")
 OFN_PAYMENT_METHOD_ID = get_nanostore_settings(key="OFN_PAYMENT_METHOD_ID")
 TIMEOUT_SHOPPING_CART = int(get_nanostore_settings(key="TIMEOUT_SHOPPING_CART"))
+
+api_service = IQToolAPI()
 
 
 def update_last_activity(session_id):
@@ -71,11 +74,42 @@ async def handle_websocket(websocket):
 
             # Open door (card scan listener) Entrance
             if msg.get("type") == "open_door":
-                # TODO: For production, get timeout from database
-                # timeout = get_setting_from_db("timeout", 8000)
                 timeout = 8000
                 trigger_relay(timeout)
-                await websocket.send(json.dumps({"type": "open_door", "status": "Ok"}))
+                await websocket.send(json.dumps({"type": "open_door", "status": "OK"}))
+
+                code = msg.get("code")
+                is_entrance = True
+                customer_firstname = ""
+                customer_lastname = ""
+
+                try:
+                    customers = fetch_customers(OFN_API_KEY)
+                    customer_data = find_customer_by_code(code, customers)
+                    customer_firstname = customer_data.get("first_name", "")
+                    customer_lastname = customer_data.get("last_name", "")
+                except Exception as e:
+                    print(f"Error fetching customer data: {e}")
+                    is_entrance = False
+
+                # If customer_firstname/lastname are empty, treat as not granted
+                if not customer_firstname and not customer_lastname:
+                    is_entrance = False
+
+                payload = {
+                    "customer_firstname": customer_firstname,
+                    "customer_lastname": customer_lastname,
+                    "rfid_card_id": code,
+                    "is_entrance": is_entrance,
+                    "ofn_hub_id": OFN_SHOP_ID,
+                }
+                try:
+                    api_service.post("entrance-history/create/", payload)
+                    print(
+                        f"Entrance history logged to IQ Tool (is_entrance={is_entrance})."
+                    )
+                except Exception as e:
+                    print(f"Failed to log entrance history: {e}")
 
             # Login (card scan listener) POS
             elif msg and msg.get("type") == "login":
