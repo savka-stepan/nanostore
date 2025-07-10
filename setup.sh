@@ -14,21 +14,15 @@ PYTHON_VERSION="3.12"
 
 echo "=== Installing system dependencies ==="
 sudo apt-get update
-sudo apt-get install -y git python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python3-pip python3-poetry pcscd pcsc-tools libpcsclite1 libccid curl nginx
+sudo apt-get install -y git python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python3-pip python3-poetry pcscd pcsc-tools libpcsclite1 libccid libnfc-bin curl nginx
 sudo apt-get install -y nodejs npm
 
 # Ensure user is in plugdev group for device access
 sudo usermod -aG plugdev $USER_NAME
 sudo usermod -aG dialout $USER_NAME
 
-echo "=== Configuring kernel module blacklist for NFC and USB relay ==="
+echo "=== Configuring kernel module blacklist for USB relay ==="
 BLACKLIST_FILE="/etc/modprobe.d/blacklist.conf"
-if ! grep -q "install nfc /bin/false" $BLACKLIST_FILE 2>/dev/null; then
-    echo "install nfc /bin/false" | sudo tee -a $BLACKLIST_FILE
-fi
-if ! grep -q "install pn533 /bin/false" $BLACKLIST_FILE 2>/dev/null; then
-    echo "install pn533 /bin/false" | sudo tee -a $BLACKLIST_FILE
-fi
 if ! grep -q "^blacklist spi_ch341" $BLACKLIST_FILE 2>/dev/null; then
     echo "blacklist spi_ch341" | sudo tee -a $BLACKLIST_FILE
 fi
@@ -39,6 +33,11 @@ sudo update-initramfs -u
 # Enable and start pcscd for NFC reader support
 sudo systemctl enable pcscd
 sudo systemctl start pcscd
+
+# Reset NFC readers to fix initialization issues
+echo "=== Resetting NFC readers ==="
+nfc-list || true
+nfc-scan-device || true
 
 # Ensure correct permissions for ACR122U NFC reader
 sudo tee /etc/udev/rules.d/99-acr122u.rules > /dev/null <<EOF
