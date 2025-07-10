@@ -3,7 +3,7 @@
 set -e
 
 PROJECT_ROOT="$(pwd)"
-RELEASE_URL="https://github.com/savka-stepan/nanostore/archive/refs/tags/v1.0.0.tar.gz"
+RELEASE_URL="https://github.com/savka-stepan/nanostore/archive/refs/heads/main.tar.gz"
 RELEASE_ARCHIVE="$PROJECT_ROOT/nanostore.tar.gz"
 REPO_DIR="$PROJECT_ROOT/nanostore"
 BACKEND_DIR="$REPO_DIR/backend"
@@ -66,16 +66,19 @@ EOF
 sudo systemctl restart polkit
 sudo systemctl restart pcscd
 
-echo "=== Downloading nanostore release archive ==="
-if [ ! -d "$REPO_DIR" ]; then
-    wget -O "$RELEASE_ARCHIVE" "$RELEASE_URL"
-    tar -xzf "$RELEASE_ARCHIVE"
-    EXTRACTED_DIR=$(tar -tzf "$RELEASE_ARCHIVE" | head -1 | cut -f1 -d"/")
-    mv "$EXTRACTED_DIR" "$REPO_DIR"
-    rm "$RELEASE_ARCHIVE"
-else
-    echo "nanostore directory already exists, skipping download."
+echo "=== Downloading latest nanostore release archive ==="
+# Remove existing directory to ensure fresh download
+if [ -d "$REPO_DIR" ]; then
+    echo "Removing existing nanostore directory to update to latest version..."
+    rm -rf "$REPO_DIR"
 fi
+
+wget -O "$RELEASE_ARCHIVE" "$RELEASE_URL"
+tar -xzf "$RELEASE_ARCHIVE"
+EXTRACTED_DIR=$(tar -tzf "$RELEASE_ARCHIVE" | head -1 | cut -f1 -d"/")
+mv "$EXTRACTED_DIR" "$REPO_DIR"
+rm "$RELEASE_ARCHIVE"
+echo "Latest nanostore version downloaded and extracted."
 
 echo "=== Setting up Python backend ==="
 cd "$BACKEND_DIR"

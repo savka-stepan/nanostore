@@ -1,7 +1,3 @@
-import time
-
-INSTANCE_URL = "https://openfoodnetwork.de"
-
 # TODO: For production, you should use a more secure way to store session data.
 # For example, use a database or a secure cache like Redis.
 # Here we use a simple in-memory dictionary for demonstration purposes.
