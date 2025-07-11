@@ -28,8 +28,28 @@ cd "$BACKEND_DIR"
 # Reinstall backend dependencies
 poetry install --no-root
 
+# Create .env file for backend
+echo "=== Creating backend .env file ==="
+read -p "Enter IQT_API_EMAIL: " IQT_API_EMAIL
+read -s -p "Enter IQT_API_PASSWORD: " IQT_API_PASSWORD
+echo
+
+cat > .env << EOF
+IQT_API_EMAIL=$IQT_API_EMAIL
+IQT_API_PASSWORD=$IQT_API_PASSWORD
+EOF
+echo "Backend .env file created."
+
 echo "=== Setting up Vue frontend ==="
 cd "$FRONTEND_DIR"
+
+# Create .env.local file for frontend
+echo "=== Creating frontend .env.local file ==="
+cat > .env.local << EOF
+VITE_IQT_API_EMAIL=$IQT_API_EMAIL
+VITE_IQT_API_PASSWORD=$IQT_API_PASSWORD
+EOF
+echo "Frontend .env.local file created."
 
 # Reinstall frontend dependencies and build
 pnpm install
