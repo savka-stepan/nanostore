@@ -330,7 +330,7 @@ const addWeightedProduct = () => {
     id: weightProduct.value.id,
     name: weightProduct.value.name,
     price: Number(weightPrice.value),
-    quantity: grammNumber,
+    quantity: 1, // Always 1 for weighted products
     img: weightProduct.value.image,
     gramm: gramm.value,
     category_id: weightProduct.value.category_id,

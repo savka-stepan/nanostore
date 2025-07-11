@@ -18,22 +18,39 @@ def add_product_to_cart(session_id: str, product: dict):
         SESSION_CARTS[session_id] = []
 
     cart = SESSION_CARTS[session_id]
+
+    # For weighted products, don't combine - each weight is unique
+    if "gramm" in product:
+        # Always add as new item for weighted products
+        new_item = {
+            "id": product["id"],
+            "name": product["name"],
+            "price": float(product["price"]),
+            "quantity": 1,  # Always 1 for weighted products
+            "img": product.get("img"),
+            "category_id": product.get("category_id"),
+            "category_name": product.get("category_name"),
+            "gramm": product["gramm"],
+        }
+        cart.append(new_item)
+        return
+
+    # For regular products, combine quantities
     for item in cart:
-        if item["id"] == product["id"]:
-            item["quantity"] += 1
+        if item["id"] == product["id"] and "gramm" not in item:
+            item["quantity"] += product.get("quantity", 1)
             return
 
+    # Add new regular product
     new_item = {
         "id": product["id"],
         "name": product["name"],
         "price": float(product["price"]),
-        "quantity": 1,
+        "quantity": product.get("quantity", 1),
         "img": product.get("img"),
         "category_id": product.get("category_id"),
         "category_name": product.get("category_name"),
     }
-    if "gramm" in product:
-        new_item["gramm"] = product["gramm"]
     cart.append(new_item)
 
 

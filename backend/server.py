@@ -208,17 +208,22 @@ async def handle_websocket(websocket):
 
             elif msg.get("type") == "add_to_cart":
                 update_last_activity(session_id)
-                add_product_to_cart(
-                    session_id,
-                    {
-                        "id": msg["id"],
-                        "name": msg["name"],
-                        "price": msg["price"],
-                        "img": msg.get("img"),
-                        "category_id": msg.get("category_id"),
-                        "category_name": msg.get("category_name"),
-                    },
-                )
+                product_data = {
+                    "id": msg["id"],
+                    "name": msg["name"],
+                    "price": msg["price"],
+                    "img": msg.get("img"),
+                    "category_id": msg.get("category_id"),
+                    "category_name": msg.get("category_name"),
+                }
+
+                # Add quantity and gramm for weighted products
+                if "quantity" in msg:
+                    product_data["quantity"] = msg["quantity"]
+                if "gramm" in msg:
+                    product_data["gramm"] = msg["gramm"]
+
+                add_product_to_cart(session_id, product_data)
                 cart = get_cart_for_session(session_id)
                 await websocket.send(json.dumps({"type": "cart", "cart": cart}))
 
