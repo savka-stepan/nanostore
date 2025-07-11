@@ -138,26 +138,51 @@ const { connectWS, sendWS, closeWS } = createWebSocket(
   handleWSClose
 )
 
-function initStripe() {
+async function initStripe() {
   stripeLoading.value = true
   if (!window.Stripe) {
+    error.value = 'Stripe library not loaded'
     stripeLoading.value = false
     return
   }
-  stripe = window.Stripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
-  elements = stripe.elements()
-  // Remove previous IBAN element if remounting
-  if (ibanElement) {
-    try {
-      ibanElement.unmount()
-    } catch (e) { }
-    ibanElement = null
-  }
-  ibanElement = elements.create('iban', { supportedCountries: ['SEPA'] })
-  ibanElement.mount('#iban-element')
-  ibanElement.on('ready', () => {
+
+  try {
+    // Get publishable key from backend
+    const jwtToken = localStorage.getItem('jwtToken')
+    const response = await fetch('https://ofn.hof-homann.de/api/stripe-publishable-key/', {
+      headers: {
+        'Authorization': 'JWT ' + jwtToken
+      }
+    })
+    const data = await response.json()
+
+    if (!data.publishableKey) {
+      error.value = data.error || 'Stripe configuration not found'
+      stripeLoading.value = false
+      return
+    }
+
+    stripe = window.Stripe(data.publishableKey)
+    elements = stripe.elements()
+
+    // Remove previous IBAN element if remounting
+    if (ibanElement) {
+      try {
+        ibanElement.unmount()
+      } catch (e) { }
+      ibanElement = null
+    }
+
+    ibanElement = elements.create('iban', { supportedCountries: ['SEPA'] })
+    ibanElement.mount('#iban-element')
+    ibanElement.on('ready', () => {
+      stripeLoading.value = false
+    })
+
+  } catch (e) {
+    error.value = 'Failed to initialize Stripe: ' + e.message
     stripeLoading.value = false
-  })
+  }
 }
 
 async function confirmSepaPayment() {

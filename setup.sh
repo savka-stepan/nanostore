@@ -192,8 +192,10 @@ Requires=pcscd.service
 [Service]
 Type=simple
 WorkingDirectory=$BACKEND_DIR
+ExecStartPre=/bin/sleep 10
 ExecStart=/usr/bin/poetry run python card_listener.py
 Restart=always
+RestartSec=10
 User=$USER_NAME
 Environment=PATH=/usr/bin:/bin
 Environment=HOME=/home/$USER_NAME
